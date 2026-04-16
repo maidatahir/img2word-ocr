@@ -1,6 +1,7 @@
 import os
 import sys
 import threading
+import json
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
@@ -25,14 +26,97 @@ textMuted      = "#a8a8c0"
 successColor   = "#6af0a3"
 errorColor     = "#ff7a85"
 fontFamily     = "Segoe UI"
+settingsPath   = os.path.join(baseDir, "settings.json")
+memoryPath     = os.path.join(baseDir, "user_memory.json")
+
+class AgentChatbot(ctk.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Agent Assistant")
+        self.geometry("400x500")
+        self.configure(fg_color=glassTint)
+        self.attributes("-topmost", True)
+
+        try:
+            pywinstyles.apply_style(self, "acrylic")
+        except Exception:
+            pass
+
+        self.chatHistory = ctk.CTkTextbox(
+            self,
+            fg_color=cardTint,
+            text_color=textPrimary,
+            font=ctk.CTkFont(family=fontFamily, size=12),
+            wrap="word",
+            state="disabled"
+        )
+        self.chatHistory.pack(fill="both", expand=True, padx=15, pady=(15, 10))
+
+        inputFrame = ctk.CTkFrame(self, fg_color="transparent")
+        inputFrame.pack(fill="x", padx=15, pady=(0, 15))
+
+        self.queryInput = ctk.CTkEntry(
+            inputFrame,
+            placeholder_text="Ask me anything...",
+            fg_color=cardTint,
+            text_color=textPrimary,
+            border_color=accentLavender,
+            font=ctk.CTkFont(family=fontFamily, size=12),
+            height=35
+        )
+        self.queryInput.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.queryInput.bind("<Return>", lambda e: self.processQuery())
+
+        self.sendBtn = ctk.CTkButton(
+            inputFrame,
+            text="Send",
+            width=60,
+            height=35,
+            fg_color=accentLavender,
+            hover_color=accentHover,
+            text_color="#1a1a2e",
+            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold"),
+            command=self.processQuery
+        )
+        self.sendBtn.pack(side="right")
+
+        self.appendMessage("Agent", "Hello! I am your AI Assistant. You can ask me about local mode, clearing memory, or how this converter works.")
+
+    def appendMessage(self, sender: str, msg: str):
+        self.chatHistory.configure(state="normal")
+        self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
+        self.chatHistory.configure(state="disabled")
+        self.chatHistory.see("end")
+
+    def processQuery(self):
+        userText = self.queryInput.get().strip()
+        if not userText:
+            return
+        
+        self.queryInput.delete(0, "end")
+        self.appendMessage("You", userText)
+        
+        userTextLower = userText.lower()
+        if "local" in userTextLower or "privacy" in userTextLower:
+            replyText = "When 'Strict Local Mode' is enabled, I use local Tesseract OCR. No data is sent to cloud LLM APIs, ensuring total privacy."
+        elif "clear" in userTextLower or "memory" in userTextLower:
+            replyText = "You can clear my stored contextual memory by clicking the 'Clear Agent Memory' button in the main window. This deletes user_memory.json."
+        elif "how" in userTextLower or "work" in userTextLower:
+            replyText = "I preprocess your image, run OCR to detect text and spatial gaps, apply heuristics for formatting, and output a structured Word document."
+        elif "hello" in userTextLower or "hi" in userTextLower:
+            replyText = "Hello! Ready to convert some images?"
+        else:
+            replyText = "I'm a rule-based agent for now. I can help answer queries regarding privacy, local mode, and clearing memory."
+            
+        self.after(500, lambda: self.appendMessage("Agent", replyText))
 
 
 class ImageToWordApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Image to Word Converter")
-        self.geometry("1000x750")
-        self.minsize(860, 660)
+        self.geometry("1000x800")
+        self.minsize(860, 700)
 
         try:
             pywinstyles.apply_style(self, "acrylic")
@@ -42,9 +126,81 @@ class ImageToWordApp(ctk.CTk):
         self.imagePath = None
         self.tkImg     = None
         self.isProcessing = False
+        self.chatbotWindow = None
 
+        self.checkTermsAndConditions()
         self.buildUi()
         self.checkTesseract()
+
+    def checkTermsAndConditions(self):
+        termsAccepted = False
+        if os.path.exists(settingsPath):
+            try:
+                with open(settingsPath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    termsAccepted = data.get("acceptedTerms", False)
+            except Exception:
+                pass
+
+        if not termsAccepted:
+            self.showTermsModal()
+
+    def showTermsModal(self):
+        modalWindow = ctk.CTkToplevel(self)
+        modalWindow.title("Terms & Privacy")
+        modalWindow.geometry("500x350")
+        modalWindow.attributes("-topmost", True)
+        modalWindow.grab_set()
+
+        try: pywinstyles.apply_style(modalWindow, "acrylic")
+        except: pass
+
+        ctk.CTkLabel(
+            modalWindow,
+            text="Privacy & Terms of Use",
+            font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"),
+            text_color=accentLavender
+        ).pack(pady=(20, 10))
+
+        termsText = (
+            "By using this Agentic System, you agree to the following:\n\n"
+            "1. PRIVACY: Your data remains yours. The 'Strict Local Mode'\n"
+            "   ensures your images are processed entirely offline.\n"
+            "2. MEMORY: The agent learns your handwriting style over time.\n"
+            "   You can delete this memory at any time via the GUI.\n"
+            "3. INTEGRITY: Do not use this tool to infringe on copyrights.\n\n"
+            "Do you accept these terms to proceed?"
+        )
+        ctk.CTkLabel(
+            modalWindow,
+            text=termsText,
+            font=ctk.CTkFont(family=fontFamily, size=12),
+            text_color=textPrimary,
+            justify="left"
+        ).pack(padx=30, pady=10)
+
+        def acceptTerms():
+            with open(settingsPath, "w", encoding="utf-8") as f:
+                json.dump({"acceptedTerms": True}, f)
+            modalWindow.destroy()
+
+        def declineTerms():
+            sys.exit(0)
+
+        btnFrame = ctk.CTkFrame(modalWindow, fg_color="transparent")
+        btnFrame.pack(pady=20)
+
+        ctk.CTkButton(
+            btnFrame, text="Decline & Exit", command=declineTerms,
+            fg_color="transparent", border_width=1, text_color=errorColor, border_color=errorColor
+        ).pack(side="left", padx=10)
+        
+        ctk.CTkButton(
+            btnFrame, text="I Accept", command=acceptTerms,
+            fg_color=accentLavender, text_color="#1a1a2e", hover_color=accentHover
+        ).pack(side="right", padx=10)
+        
+        self.wait_window(modalWindow)
 
     def checkTesseract(self):
         try:
@@ -71,12 +227,20 @@ class ImageToWordApp(ctk.CTk):
             text_color=textPrimary,
         ).pack(side="left", padx=30, pady=20)
 
-        ctk.CTkLabel(
+        self.chatBtn = ctk.CTkButton(
             headerFrame,
-            text="Powered by Tesseract OCR",
-            font=ctk.CTkFont(family=fontFamily, size=13),
-            text_color=textMuted,
-        ).pack(side="right", padx=30, pady=20)
+            text="💬 Ask Agent",
+            command=self.openChatbot,
+            fg_color="transparent",
+            hover_color="#3a3c54",
+            border_width=1,
+            border_color=accentLavender,
+            text_color=accentLavender,
+            width=100,
+            height=30,
+            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold")
+        )
+        self.chatBtn.pack(side="right", padx=30, pady=20)
 
         ctk.CTkFrame(self, height=2, fg_color=accentLavender).pack(fill="x")
 
@@ -117,9 +281,8 @@ class ImageToWordApp(ctk.CTk):
         )
         self.previewCanvas.bind("<Configure>", self.onCanvasResize)
 
-        rightPanel = ctk.CTkFrame(contentFrame, width=300, fg_color="transparent")
+        rightPanel = ctk.CTkScrollableFrame(contentFrame, width=320, fg_color="transparent")
         rightPanel.pack(side="right", fill="y")
-        rightPanel.pack_propagate(False)
 
         self.browseBtn = ctk.CTkButton(
             rightPanel, 
@@ -134,7 +297,7 @@ class ImageToWordApp(ctk.CTk):
             corner_radius=10,
             font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")
         )
-        self.browseBtn.pack(fill="x", pady=(0, 18))
+        self.browseBtn.pack(fill="x", pady=(0, 15))
 
         fileCard = self.makeCard(rightPanel, "SELECTED FILE")
         self.fileLabel = ctk.CTkLabel(
@@ -151,11 +314,26 @@ class ImageToWordApp(ctk.CTk):
         self.enhanceVar     = ctk.BooleanVar(value=True)
         self.detectFmtVar   = ctk.BooleanVar(value=True)
         self.detectAlignVar = ctk.BooleanVar(value=True)
+        self.localModeVar   = ctk.BooleanVar(value=True)
         
         self.makeCheckbox(optsCard, "Enhance image before OCR", self.enhanceVar)
-        self.makeCheckbox(optsCard, "Detect formatting (bold/italic)", self.detectFmtVar)
-        self.makeCheckbox(optsCard, "Detect paragraph alignment", self.detectAlignVar)
+        self.makeCheckbox(optsCard, "Detect formatting", self.detectFmtVar)
+        self.makeCheckbox(optsCard, "Detect alignment", self.detectAlignVar)
+        self.makeCheckbox(optsCard, "Strict Local Mode (No AI API)", self.localModeVar)
         ctk.CTkFrame(optsCard, height=10, fg_color="transparent").pack() 
+
+        privacyCard = self.makeCard(rightPanel, "PRIVACY & MEMORY")
+        ctk.CTkButton(
+            privacyCard, text="View Terms & Conditions", command=self.showTermsModal,
+            fg_color="transparent", border_width=1, border_color=textMuted, text_color=textMuted,
+            height=28, font=ctk.CTkFont(family=fontFamily, size=11, weight="bold")
+        ).pack(anchor="w", padx=15, pady=(5, 10))
+        
+        ctk.CTkButton(
+            privacyCard, text="Clear Agent Memory", command=self.clearMemory,
+            fg_color="transparent", border_width=1, border_color=errorColor, text_color=errorColor, hover_color="#4a1a2e",
+            height=28, font=ctk.CTkFont(family=fontFamily, size=11, weight="bold")
+        ).pack(anchor="w", padx=15, pady=(0, 15))
 
         outCard = self.makeCard(rightPanel, "OUTPUT FOLDER")
         self.outputLabel = ctk.CTkLabel(
@@ -194,7 +372,7 @@ class ImageToWordApp(ctk.CTk):
             corner_radius=10,
             font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")
         )
-        self.convertBtn.pack(fill="x", pady=(5, 18))
+        self.convertBtn.pack(fill="x", pady=(5, 15))
 
         statusCard = self.makeCard(rightPanel, "STATUS")
         self.statusLabel = ctk.CTkLabel(
@@ -223,7 +401,7 @@ class ImageToWordApp(ctk.CTk):
 
     def makeCard(self, parent, titleText):
         cardWidget = ctk.CTkFrame(parent, fg_color=cardTint, corner_radius=12)
-        cardWidget.pack(fill="x", pady=(0, 18))
+        cardWidget.pack(fill="x", pady=(0, 15))
         try:
             pywinstyles.set_opacity(cardWidget, value=0.85)
         except Exception:
@@ -296,6 +474,20 @@ class ImageToWordApp(ctk.CTk):
         except Exception as excMsg:
             self.setStatus(f"Preview error: {excMsg}", errorColor)
 
+    def openChatbot(self):
+        if self.chatbotWindow is None or not self.chatbotWindow.winfo_exists():
+            self.chatbotWindow = AgentChatbot(self)
+        else:
+            self.chatbotWindow.focus()
+
+    def clearMemory(self):
+        if messagebox.askyesno("Confirm", "Are you sure you want to clear your stored OCR profiles and reset settings?"):
+            if os.path.exists(memoryPath):
+                os.remove(memoryPath)
+            if os.path.exists(settingsPath):
+                os.remove(settingsPath)
+            self.setStatus("Agent memory successfully cleared.", successColor)
+
     def startConversion(self):
         if self.isProcessing:
             return
@@ -305,12 +497,15 @@ class ImageToWordApp(ctk.CTk):
         self.isProcessing = True
         self.convertBtn.configure(state="disabled", text="Processing...")
         self.progressBar.start()
-        self.setStatus("Processing image...", textMuted)
+        
+        modeText = "Local" if self.localModeVar.get() else "Cloud AI"
+        self.setStatus(f"Processing image in {modeText} mode...", textMuted)
+        
         threading.Thread(target=self.convertWorker, daemon=True).start()
 
     def convertWorker(self):
         try:
-            ocrResult = runOcr(self.imagePath)
+            ocrResult = runOcr(self.imagePath, localMode=self.localModeVar.get())
 
             baseName  = os.path.splitext(os.path.basename(self.imagePath))[0]
             outDir    = self.outputDir or os.path.dirname(self.imagePath)

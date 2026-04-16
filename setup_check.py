@@ -1,44 +1,31 @@
-# -*- coding: utf-8 -*-
-"""
-setup_check.py
---------------
-Run this script FIRST to verify all dependencies are installed correctly.
-It will guide you through any missing components.
-
-Usage:
-    python setup_check.py
-"""
-
 import sys
 import subprocess
 import os
 
-# Force UTF-8 output to avoid cp1252 encoding errors on Windows
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-RED    = "\033[91m"
-GREEN  = "\033[92m"
-YELLOW = "\033[93m"
-CYAN   = "\033[96m"
-RESET  = "\033[0m"
-BOLD   = "\033[1m"
+textColorRed    = "\033[91m"
+textColorGreen  = "\033[92m"
+textColorYellow = "\033[93m"
+textColorCyan   = "\033[96m"
+textReset       = "\033[0m"
+textBold        = "\033[1m"
 
-def check(label, fn):
+def performCheck(checkLabel, checkFn):
     try:
-        result = fn()
-        print(f"  {GREEN}✓{RESET}  {label}" + (f"  → {result}" if result else ""))
+        checkResult = checkFn()
+        print(f"  {textColorGreen}✓{textReset}  {checkLabel}" + (f"  → {checkResult}" if checkResult else ""))
         return True
-    except Exception as e:
-        print(f"  {RED}✗{RESET}  {label}  →  {RED}{e}{RESET}")
+    except Exception as excMsg:
+        print(f"  {textColorRed}✗{textReset}  {checkLabel}  →  {textColorRed}{excMsg}{textReset}")
         return False
 
-print(f"\n{BOLD}{CYAN}Image→Word Converter – Dependency Check{RESET}\n")
+print(f"\n{textBold}{textColorCyan}Image→Word Converter - Dependency Check{textReset}\n")
 
-# ── Python version
-print(f"{BOLD}Python{RESET}")
-py_ok = check(
-    f"Python ≥ 3.9",
+print(f"{textBold}Python{textReset}")
+isPythonOk = performCheck(
+    f"Python >= 3.9",
     lambda: (
         f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         if sys.version_info >= (3, 9)
@@ -46,65 +33,61 @@ py_ok = check(
     ),
 )
 
-# ── Python packages
-print(f"\n{BOLD}Python Packages{RESET}")
-packages = {
-    "pytesseract":  lambda: __import__("pytesseract").__version__,
-    "Pillow":       lambda: __import__("PIL").__version__,
-    "opencv-python":lambda: __import__("cv2").__version__,
-    "python-docx":  lambda: __import__("docx").__version__,
+print(f"\n{textBold}Python Packages{textReset}")
+requiredPackages = {
+    "pytesseract":    lambda: __import__("pytesseract").__version__,
+    "Pillow":         lambda: __import__("PIL").__version__,
+    "opencv-python":  lambda: __import__("cv2").__version__,
+    "python-docx":    lambda: __import__("docx").__version__,
     "beautifulsoup4": lambda: __import__("bs4").__version__,
-    "lxml":         lambda: __import__("lxml").__version__,
-    "numpy":        lambda: __import__("numpy").__version__,
+    "lxml":           lambda: __import__("lxml").__version__,
+    "numpy":          lambda: __import__("numpy").__version__,
 }
-pkg_ok = all(check(name, fn) for name, fn in packages.items())
+arePackagesOk = all(performCheck(pkgName, pkgFn) for pkgName, pkgFn in requiredPackages.items())
 
-# ── Tesseract binary
-print(f"\n{BOLD}Tesseract OCR Engine{RESET}")
-tess_paths = [
+print(f"\n{textBold}Tesseract OCR Engine{textReset}")
+tesseractPaths = [
     r"C:\Program Files\Tesseract-OCR\tesseract.exe",
     r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
 ]
-tess_found = False
-for p in tess_paths:
-    if os.path.exists(p):
-        tess_found = True
-        check("Tesseract binary", lambda: p)
+isTesseractFound = False
+for tesseractPath in tesseractPaths:
+    if os.path.exists(tesseractPath):
+        isTesseractFound = True
+        performCheck("Tesseract binary", lambda: tesseractPath)
         break
 
-if not tess_found:
-    # Try PATH
+if not isTesseractFound:
     try:
-        result = subprocess.run(["tesseract", "--version"], capture_output=True, text=True)
-        if result.returncode == 0:
-            ver = result.stdout.splitlines()[0]
-            check("Tesseract in PATH", lambda: ver)
-            tess_found = True
+        processResult = subprocess.run(["tesseract", "--version"], capture_output=True, text=True)
+        if processResult.returncode == 0:
+            tesseractVersion = processResult.stdout.splitlines()[0]
+            performCheck("Tesseract in PATH", lambda: tesseractVersion)
+            isTesseractFound = True
     except FileNotFoundError:
         pass
 
-if not tess_found:
-    print(f"  {RED}✗{RESET}  Tesseract OCR not found!")
-    print(f"\n{YELLOW}  ► Install Tesseract via winget:{RESET}")
+if not isTesseractFound:
+    print(f"  {textColorRed}✗{textReset}  Tesseract OCR not found!")
+    print(f"\n{textColorYellow}  Install Tesseract via winget:{textReset}")
     print(f"    winget install UB-Mannheim.TesseractOCR")
-    print(f"\n{YELLOW}  ► Or download from:{RESET}")
+    print(f"\n{textColorYellow}  Or download from:{textReset}")
     print(f"    https://github.com/UB-Mannheim/tesseract/wiki")
-    print(f"\n{YELLOW}  After installation, restart this script.{RESET}")
+    print(f"\n{textColorYellow}  After installation, restart this script.{textReset}")
 else:
     import pytesseract
-    for p in tess_paths:
-        if os.path.exists(p):
-            pytesseract.pytesseract.tesseract_cmd = p
+    for tesseractPath in tesseractPaths:
+        if os.path.exists(tesseractPath):
+            pytesseract.pytesseract.tesseract_cmd = tesseractPath
             break
-    check("Tesseract importable via pytesseract", lambda: pytesseract.get_tesseract_version())
+    performCheck("Tesseract importable via pytesseract", lambda: pytesseract.get_tesseract_version())
 
-# ── Summary
 print(f"\n{'─'*48}")
-if py_ok and pkg_ok and tess_found:
-    print(f"{GREEN}{BOLD}✅  All checks passed! You can now run:{RESET}")
+if isPythonOk and arePackagesOk and isTesseractFound:
+    print(f"{textColorGreen}{textBold}✅  All checks passed! You can now run:{textReset}")
     print(f"    python main.py\n")
 else:
-    print(f"{YELLOW}{BOLD}⚠  Some checks failed. Fix the issues above, then re-run.{RESET}\n")
-    if not pkg_ok:
-        print(f"{YELLOW}  To install missing packages:{RESET}")
+    print(f"{textColorYellow}{textBold}⚠  Some checks failed. Fix the issues above, then re-run.{textReset}\n")
+    if not arePackagesOk:
+        print(f"{textColorYellow}  To install missing packages:{textReset}")
         print(f"    pip install -r requirements.txt\n")

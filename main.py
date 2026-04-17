@@ -23,7 +23,7 @@ cardTint       = "#ffffff"   # Pure white for cards, highly translucent
 accentColor    = "#af52de"   # iOS System Purple
 accentHover    = "#c86efd"
 textPrimary    = "#000000"   # Black text for HD clarity
-textMuted      = "#8e8e93"   # iOS System Gray
+textMuted      = "#5c5c60"   # Darker iOS System Gray for better visibility
 successColor   = "#34c759"   # iOS System Green
 errorColor     = "#ff3b30"   # iOS System Red
 fontFamily     = "Helvetica" # Closest universal fallback to SF Pro
@@ -155,7 +155,7 @@ class ImageToWordApp(ctk.CTk):
     def showTermsModal(self):
         modalWindow = ctk.CTkToplevel(self)
         modalWindow.title("Terms & Privacy")
-        modalWindow.geometry("500x380")
+        modalWindow.geometry("550x500")
         modalWindow.configure(fg_color=glassTint)
         modalWindow.attributes("-topmost", True)
         modalWindow.grab_set()
@@ -166,7 +166,7 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(
             modalWindow,
             text="Privacy & Terms of Use",
-            font=ctk.CTkFont(family=fontFamily, size=20, weight="bold"),
+            font=ctk.CTkFont(family=fontFamily, size=22, weight="bold"),
             text_color=accentColor
         ).pack(pady=(30, 10))
 
@@ -176,16 +176,30 @@ class ImageToWordApp(ctk.CTk):
             "   ensures your images are processed entirely offline.\n"
             "2. MEMORY: The agent learns your handwriting style over time.\n"
             "   You can delete this memory at any time via the GUI.\n"
-            "3. INTEGRITY: Do not use this tool to infringe on copyrights.\n\n"
-            "Do you accept these terms to proceed?"
+            "3. INTEGRITY: Do not use this tool to infringe on copyrights."
         )
         ctk.CTkLabel(
             modalWindow,
             text=termsText,
-            font=ctk.CTkFont(family=fontFamily, size=13),
+            font=ctk.CTkFont(family=fontFamily, size=14),
             text_color=textPrimary,
             justify="left"
-        ).pack(padx=30, pady=10)
+        ).pack(padx=40, pady=10)
+
+        cbVar1 = ctk.BooleanVar(value=False)
+        cbVar2 = ctk.BooleanVar(value=False)
+
+        def checkAcceptState(*args):
+            if cbVar1.get() and cbVar2.get():
+                acceptBtn.configure(state="normal", fg_color=accentColor)
+            else:
+                acceptBtn.configure(state="disabled", fg_color="#d1d1d6")
+
+        cbVar1.trace_add("write", checkAcceptState)
+        cbVar2.trace_add("write", checkAcceptState)
+
+        ctk.CTkCheckBox(modalWindow, text="I agree to the offline Privacy processing.", variable=cbVar1, font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), text_color=textPrimary, fg_color=accentColor, hover_color=accentHover).pack(anchor="w", padx=45, pady=(15, 5))
+        ctk.CTkCheckBox(modalWindow, text="I understand the Agent Memory features.", variable=cbVar2, font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), text_color=textPrimary, fg_color=accentColor, hover_color=accentHover).pack(anchor="w", padx=45, pady=5)
 
         def acceptTerms():
             with open(settingsPath, "w", encoding="utf-8") as f:
@@ -201,14 +215,15 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkButton(
             btnFrame, text="Decline & Exit", command=declineTerms,
             fg_color="transparent", text_color=errorColor,
-            font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")
+            font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")
         ).pack(side="left", padx=15)
         
-        ctk.CTkButton(
+        acceptBtn = ctk.CTkButton(
             btnFrame, text="I Accept", command=acceptTerms,
-            fg_color=accentColor, text_color="#ffffff", hover_color=accentHover,
-            corner_radius=18, font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")
-        ).pack(side="right", padx=15)
+            fg_color="#d1d1d6", text_color="#ffffff", hover_color=accentHover, state="disabled",
+            corner_radius=18, font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")
+        )
+        acceptBtn.pack(side="right", padx=15)
         
         self.wait_window(modalWindow)
 
@@ -256,11 +271,6 @@ class ImageToWordApp(ctk.CTk):
 
         leftPanel = ctk.CTkFrame(contentFrame, fg_color=cardTint, corner_radius=cardRadius)
         leftPanel.pack(side="left", fill="both", expand=True, padx=(0, 25))
-        
-        try:
-            pywinstyles.set_opacity(leftPanel, value=0.65)
-        except Exception:
-            pass
 
         self.previewCanvas = tk.Canvas(
             leftPanel,
@@ -398,10 +408,6 @@ class ImageToWordApp(ctk.CTk):
     def makeCard(self, parent, titleText):
         cardWidget = ctk.CTkFrame(parent, fg_color=cardTint, corner_radius=cardRadius)
         cardWidget.pack(fill="x", pady=(0, 20))
-        try:
-            pywinstyles.set_opacity(cardWidget, value=0.65)
-        except Exception:
-            pass
         
         ctk.CTkLabel(
             cardWidget,

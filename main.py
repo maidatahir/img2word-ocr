@@ -17,15 +17,18 @@ from src.document_builder import buildDocx
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
 
-glassTint      = "#1c1c28"
-cardTint       = "#282a36" 
-accentLavender = "#b4b4f3"
-accentHover    = "#9292d0"
-textPrimary    = "#e6e6fa"
-textMuted      = "#a8a8c0"
-successColor   = "#6af0a3"
-errorColor     = "#ff7a85"
-fontFamily     = "Segoe UI"
+# iOS 26 Futuristic Dark Theme Constants
+glassTint      = "#000000"   # Pure black base for OLED depth
+cardTint       = "#1c1c1e"   # Elevated iOS dark card color
+accentColor    = "#bf5af2"   # iOS System Purple
+accentHover    = "#da8fff"
+textPrimary    = "#ffffff"
+textMuted      = "#8e8e93"   # iOS System Gray
+successColor   = "#32d74b"   # iOS System Green
+errorColor     = "#ff453a"   # iOS System Red
+fontFamily     = "Helvetica" # Closest universal fallback to SF Pro
+cardRadius     = 20          # Heavy squircle rounding typical of modern iOS
+
 settingsPath   = os.path.join(baseDir, "settings.json")
 memoryPath     = os.path.join(baseDir, "user_memory.json")
 
@@ -33,7 +36,7 @@ class AgentChatbot(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title("Agent Assistant")
-        self.geometry("400x500")
+        self.geometry("400x550")
         self.configure(fg_color=glassTint)
         self.attributes("-topmost", True)
 
@@ -46,36 +49,39 @@ class AgentChatbot(ctk.CTkToplevel):
             self,
             fg_color=cardTint,
             text_color=textPrimary,
-            font=ctk.CTkFont(family=fontFamily, size=12),
+            font=ctk.CTkFont(family=fontFamily, size=13),
             wrap="word",
-            state="disabled"
+            state="disabled",
+            corner_radius=15
         )
-        self.chatHistory.pack(fill="both", expand=True, padx=15, pady=(15, 10))
+        self.chatHistory.pack(fill="both", expand=True, padx=20, pady=(20, 15))
 
         inputFrame = ctk.CTkFrame(self, fg_color="transparent")
-        inputFrame.pack(fill="x", padx=15, pady=(0, 15))
+        inputFrame.pack(fill="x", padx=20, pady=(0, 20))
 
         self.queryInput = ctk.CTkEntry(
             inputFrame,
             placeholder_text="Ask me anything...",
             fg_color=cardTint,
             text_color=textPrimary,
-            border_color=accentLavender,
-            font=ctk.CTkFont(family=fontFamily, size=12),
-            height=35
+            border_width=0,
+            corner_radius=18,
+            font=ctk.CTkFont(family=fontFamily, size=13),
+            height=40
         )
         self.queryInput.pack(side="left", fill="x", expand=True, padx=(0, 10))
         self.queryInput.bind("<Return>", lambda e: self.processQuery())
 
         self.sendBtn = ctk.CTkButton(
             inputFrame,
-            text="Send",
-            width=60,
-            height=35,
-            fg_color=accentLavender,
+            text="↑",
+            width=40,
+            height=40,
+            corner_radius=20,
+            fg_color=accentColor,
             hover_color=accentHover,
-            text_color="#1a1a2e",
-            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold"),
+            text_color="#ffffff",
+            font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"),
             command=self.processQuery
         )
         self.sendBtn.pack(side="right")
@@ -115,8 +121,9 @@ class ImageToWordApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Image to Word Converter")
-        self.geometry("1000x800")
-        self.minsize(860, 700)
+        self.geometry("1050x850")
+        self.minsize(900, 750)
+        self.configure(fg_color=glassTint)
 
         try:
             pywinstyles.apply_style(self, "acrylic")
@@ -148,7 +155,8 @@ class ImageToWordApp(ctk.CTk):
     def showTermsModal(self):
         modalWindow = ctk.CTkToplevel(self)
         modalWindow.title("Terms & Privacy")
-        modalWindow.geometry("500x350")
+        modalWindow.geometry("500x380")
+        modalWindow.configure(fg_color=glassTint)
         modalWindow.attributes("-topmost", True)
         modalWindow.grab_set()
 
@@ -158,9 +166,9 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(
             modalWindow,
             text="Privacy & Terms of Use",
-            font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"),
-            text_color=accentLavender
-        ).pack(pady=(20, 10))
+            font=ctk.CTkFont(family=fontFamily, size=20, weight="bold"),
+            text_color=accentColor
+        ).pack(pady=(30, 10))
 
         termsText = (
             "By using this Agentic System, you agree to the following:\n\n"
@@ -174,7 +182,7 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(
             modalWindow,
             text=termsText,
-            font=ctk.CTkFont(family=fontFamily, size=12),
+            font=ctk.CTkFont(family=fontFamily, size=13),
             text_color=textPrimary,
             justify="left"
         ).pack(padx=30, pady=10)
@@ -188,17 +196,19 @@ class ImageToWordApp(ctk.CTk):
             sys.exit(0)
 
         btnFrame = ctk.CTkFrame(modalWindow, fg_color="transparent")
-        btnFrame.pack(pady=20)
+        btnFrame.pack(pady=25)
 
         ctk.CTkButton(
             btnFrame, text="Decline & Exit", command=declineTerms,
-            fg_color="transparent", border_width=1, text_color=errorColor, border_color=errorColor
-        ).pack(side="left", padx=10)
+            fg_color="transparent", text_color=errorColor,
+            font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")
+        ).pack(side="left", padx=15)
         
         ctk.CTkButton(
             btnFrame, text="I Accept", command=acceptTerms,
-            fg_color=accentLavender, text_color="#1a1a2e", hover_color=accentHover
-        ).pack(side="right", padx=10)
+            fg_color=accentColor, text_color="#ffffff", hover_color=accentHover,
+            corner_radius=18, font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")
+        ).pack(side="right", padx=15)
         
         self.wait_window(modalWindow)
 
@@ -216,148 +226,134 @@ class ImageToWordApp(ctk.CTk):
             )
 
     def buildUi(self):
-        headerFrame = ctk.CTkFrame(self, height=75, fg_color="transparent", corner_radius=0)
+        headerFrame = ctk.CTkFrame(self, height=80, fg_color="transparent", corner_radius=0)
         headerFrame.pack(fill="x", side="top")
         headerFrame.pack_propagate(False)
 
         ctk.CTkLabel(
             headerFrame,
-            text="Image to Word Converter",
-            font=ctk.CTkFont(family=fontFamily, size=22, weight="bold"),
+            text="Image to Word",
+            font=ctk.CTkFont(family=fontFamily, size=28, weight="bold"),
             text_color=textPrimary,
-        ).pack(side="left", padx=30, pady=20)
+        ).pack(side="left", padx=35, pady=25)
 
         self.chatBtn = ctk.CTkButton(
             headerFrame,
-            text="💬 Ask Agent",
+            text="Ask Agent",
             command=self.openChatbot,
-            fg_color="transparent",
-            hover_color="#3a3c54",
-            border_width=1,
-            border_color=accentLavender,
-            text_color=accentLavender,
-            width=100,
-            height=30,
-            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold")
+            fg_color=cardTint,
+            hover_color="#2c2c2e",
+            text_color=accentColor,
+            corner_radius=20,
+            width=110,
+            height=36,
+            font=ctk.CTkFont(family=fontFamily, size=13, weight="bold")
         )
-        self.chatBtn.pack(side="right", padx=30, pady=20)
-
-        ctk.CTkFrame(self, height=2, fg_color=accentLavender).pack(fill="x")
+        self.chatBtn.pack(side="right", padx=35, pady=22)
 
         contentFrame = ctk.CTkFrame(self, fg_color="transparent")
-        contentFrame.pack(fill="both", expand=True, padx=25, pady=25)
+        contentFrame.pack(fill="both", expand=True, padx=30, pady=(0, 20))
 
-        leftPanel = ctk.CTkFrame(contentFrame, fg_color=cardTint, corner_radius=15)
-        leftPanel.pack(side="left", fill="both", expand=True, padx=(0, 20))
+        leftPanel = ctk.CTkFrame(contentFrame, fg_color=cardTint, corner_radius=cardRadius)
+        leftPanel.pack(side="left", fill="both", expand=True, padx=(0, 25))
         
         try:
             pywinstyles.set_opacity(leftPanel, value=0.85)
         except Exception:
             pass
 
-        ctk.CTkLabel(
-            leftPanel,
-            text="INPUT IMAGE",
-            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold"),
-            text_color=accentLavender,
-        ).pack(anchor="nw", padx=20, pady=(15, 5))
-
         self.previewCanvas = tk.Canvas(
             leftPanel,
-            bg="#1e1e2e",
+            bg=cardTint,
             highlightthickness=0,
             cursor="hand2",
         )
-        self.previewCanvas.pack(fill="both", expand=True, padx=15, pady=(0, 15))
+        self.previewCanvas.pack(fill="both", expand=True, padx=20, pady=20)
         self.previewCanvas.bind("<Button-1>", lambda e: self.browseImage())
 
         self.placeholderTextId = self.previewCanvas.create_text(
             200, 200,
-            text="Click to select an image\n\n(JPG / PNG / JPEG)",
+            text="Tap to select an image",
             fill=textMuted,
-            font=(fontFamily, 14),
+            font=(fontFamily, 16),
             justify="center",
             tags="placeholder",
         )
         self.previewCanvas.bind("<Configure>", self.onCanvasResize)
 
-        rightPanel = ctk.CTkScrollableFrame(contentFrame, width=320, fg_color="transparent")
+        rightPanel = ctk.CTkScrollableFrame(contentFrame, width=340, fg_color="transparent")
         rightPanel.pack(side="right", fill="y")
 
         self.browseBtn = ctk.CTkButton(
             rightPanel, 
-            text="Browse Image", 
+            text="Choose Image...", 
             command=self.browseImage,
-            fg_color="transparent",
-            hover_color="#3a3c54",
-            border_width=1.5,
-            border_color=accentLavender,
-            text_color=accentLavender,
-            height=40,
-            corner_radius=10,
-            font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")
+            fg_color=cardTint,
+            hover_color="#2c2c2e",
+            text_color=accentColor,
+            height=45,
+            corner_radius=cardRadius,
+            font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")
         )
-        self.browseBtn.pack(fill="x", pady=(0, 15))
+        self.browseBtn.pack(fill="x", pady=(0, 20))
 
         fileCard = self.makeCard(rightPanel, "SELECTED FILE")
         self.fileLabel = ctk.CTkLabel(
             fileCard,
-            text="No file selected",
-            font=ctk.CTkFont(family=fontFamily, size=13),
+            text="None",
+            font=ctk.CTkFont(family=fontFamily, size=14),
             text_color=textMuted,
-            wraplength=250,
+            wraplength=280,
             justify="left"
         )
-        self.fileLabel.pack(anchor="w", pady=(5, 15), padx=15)
+        self.fileLabel.pack(anchor="w", pady=(5, 15), padx=20)
 
-        optsCard = self.makeCard(rightPanel, "OPTIONS")
+        optsCard = self.makeCard(rightPanel, "PROCESSING OPTIONS")
         self.enhanceVar     = ctk.BooleanVar(value=True)
         self.detectFmtVar   = ctk.BooleanVar(value=True)
         self.detectAlignVar = ctk.BooleanVar(value=True)
         self.localModeVar   = ctk.BooleanVar(value=True)
         
-        self.makeCheckbox(optsCard, "Enhance image before OCR", self.enhanceVar)
-        self.makeCheckbox(optsCard, "Detect formatting", self.detectFmtVar)
-        self.makeCheckbox(optsCard, "Detect alignment", self.detectAlignVar)
-        self.makeCheckbox(optsCard, "Strict Local Mode (No AI API)", self.localModeVar)
+        self.makeSwitch(optsCard, "Enhance image before OCR", self.enhanceVar)
+        self.makeSwitch(optsCard, "Detect formatting", self.detectFmtVar)
+        self.makeSwitch(optsCard, "Detect alignment", self.detectAlignVar)
+        self.makeSwitch(optsCard, "Strict Local Mode", self.localModeVar)
         ctk.CTkFrame(optsCard, height=10, fg_color="transparent").pack() 
 
         privacyCard = self.makeCard(rightPanel, "PRIVACY & MEMORY")
         ctk.CTkButton(
             privacyCard, text="View Terms & Conditions", command=self.showTermsModal,
-            fg_color="transparent", border_width=1, border_color=textMuted, text_color=textMuted,
-            height=28, font=ctk.CTkFont(family=fontFamily, size=11, weight="bold")
-        ).pack(anchor="w", padx=15, pady=(5, 10))
+            fg_color="transparent", text_color=textMuted, hover_color=cardTint,
+            height=30, anchor="w", font=ctk.CTkFont(family=fontFamily, size=13)
+        ).pack(anchor="w", fill="x", padx=10, pady=(5, 5))
         
         ctk.CTkButton(
             privacyCard, text="Clear Agent Memory", command=self.clearMemory,
-            fg_color="transparent", border_width=1, border_color=errorColor, text_color=errorColor, hover_color="#4a1a2e",
-            height=28, font=ctk.CTkFont(family=fontFamily, size=11, weight="bold")
-        ).pack(anchor="w", padx=15, pady=(0, 15))
+            fg_color="transparent", text_color=errorColor, hover_color=cardTint,
+            height=30, anchor="w", font=ctk.CTkFont(family=fontFamily, size=13)
+        ).pack(anchor="w", fill="x", padx=10, pady=(0, 10))
 
         outCard = self.makeCard(rightPanel, "OUTPUT FOLDER")
         self.outputLabel = ctk.CTkLabel(
             outCard,
-            text="Same folder as input image",
-            font=ctk.CTkFont(family=fontFamily, size=13),
+            text="Same as input image",
+            font=ctk.CTkFont(family=fontFamily, size=14),
             text_color=textMuted,
-            wraplength=250,
+            wraplength=280,
             justify="left"
         )
-        self.outputLabel.pack(anchor="w", pady=(5, 5), padx=15)
+        self.outputLabel.pack(anchor="w", pady=(5, 10), padx=20)
         
         ctk.CTkButton(
             outCard, 
-            text="Change Folder", 
+            text="Change Folder...", 
             command=self.browseOutput,
             fg_color="transparent",
-            hover_color="#3a3c54",
-            border_width=1,
-            border_color=accentLavender,
-            text_color=accentLavender,
-            height=30,
-            corner_radius=8,
-            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold")
+            hover_color="#2c2c2e",
+            text_color=accentColor,
+            height=35,
+            corner_radius=18,
+            font=ctk.CTkFont(family=fontFamily, size=13, weight="bold")
         ).pack(anchor="w", padx=15, pady=(0, 15))
         self.outputDir = None
 
@@ -365,43 +361,43 @@ class ImageToWordApp(ctk.CTk):
             rightPanel, 
             text="Convert to Word", 
             command=self.startConversion,
-            fg_color=accentLavender,
+            fg_color=accentColor,
             hover_color=accentHover,
-            text_color="#1a1a2e",
-            height=45,
-            corner_radius=10,
-            font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")
+            text_color="#ffffff",
+            height=50,
+            corner_radius=25, # Pill shaped
+            font=ctk.CTkFont(family=fontFamily, size=16, weight="bold")
         )
-        self.convertBtn.pack(fill="x", pady=(5, 15))
+        self.convertBtn.pack(fill="x", pady=(10, 20))
 
         statusCard = self.makeCard(rightPanel, "STATUS")
         self.statusLabel = ctk.CTkLabel(
             statusCard,
-            text="Ready",
-            font=ctk.CTkFont(family=fontFamily, size=13),
+            text="Ready to process",
+            font=ctk.CTkFont(family=fontFamily, size=14),
             text_color=successColor,
-            wraplength=250,
+            wraplength=280,
             justify="left"
         )
-        self.statusLabel.pack(anchor="w", pady=(5, 5), padx=15)
+        self.statusLabel.pack(anchor="w", pady=(5, 10), padx=20)
 
-        self.progressBar = ctk.CTkProgressBar(statusCard, progress_color=accentLavender)
-        self.progressBar.pack(fill="x", padx=15, pady=(0, 15))
+        self.progressBar = ctk.CTkProgressBar(statusCard, progress_color=accentColor, fg_color="#3a3a3c", height=6, corner_radius=3)
+        self.progressBar.pack(fill="x", padx=20, pady=(0, 20))
         self.progressBar.set(0)
 
-        footerFrame = ctk.CTkFrame(self, height=40, fg_color="transparent")
+        footerFrame = ctk.CTkFrame(self, height=45, fg_color="transparent")
         footerFrame.pack(fill="x", side="bottom")
         footerFrame.pack_propagate(False)
         ctk.CTkLabel(
             footerFrame,
-            text="Image to Word Converter  |  Agentic System MVP  |  Tesseract OCR + python-docx",
+            text="Agentic System MVP  •  Tesseract OCR",
             font=ctk.CTkFont(family=fontFamily, size=12),
             text_color=textMuted,
-        ).pack(side="left", padx=20, pady=10)
+        ).pack(side="left", padx=35, pady=12)
 
     def makeCard(self, parent, titleText):
-        cardWidget = ctk.CTkFrame(parent, fg_color=cardTint, corner_radius=12)
-        cardWidget.pack(fill="x", pady=(0, 15))
+        cardWidget = ctk.CTkFrame(parent, fg_color=cardTint, corner_radius=cardRadius)
+        cardWidget.pack(fill="x", pady=(0, 20))
         try:
             pywinstyles.set_opacity(cardWidget, value=0.85)
         except Exception:
@@ -410,27 +406,26 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(
             cardWidget,
             text=titleText,
-            font=ctk.CTkFont(family=fontFamily, size=12, weight="bold"),
-            text_color=accentLavender,
-        ).pack(anchor="w", padx=15, pady=(12, 0))
+            font=ctk.CTkFont(family=fontFamily, size=11, weight="bold"),
+            text_color=textMuted,
+        ).pack(anchor="w", padx=20, pady=(15, 0))
         return cardWidget
 
-    def makeCheckbox(self, parent, labelText, varObj):
-        cbWidget = ctk.CTkCheckBox(
+    def makeSwitch(self, parent, labelText, varObj):
+        switchWidget = ctk.CTkSwitch(
             parent,
             text=labelText,
             variable=varObj,
-            font=ctk.CTkFont(family=fontFamily, size=13),
+            font=ctk.CTkFont(family=fontFamily, size=14),
             text_color=textPrimary,
-            fg_color=accentLavender,
-            hover_color=accentHover,
-            border_color=accentLavender,
-            checkbox_width=22,
-            checkbox_height=22,
-            corner_radius=6
+            progress_color=accentColor,
+            button_color="#ffffff",
+            button_hover_color="#f0f0f0",
+            switch_width=45,
+            switch_height=24
         )
-        cbWidget.pack(anchor="w", padx=15, pady=6)
-        return cbWidget
+        switchWidget.pack(anchor="w", padx=20, pady=8)
+        return switchWidget
 
     def onCanvasResize(self, event):
         if self.imagePath:
@@ -452,7 +447,7 @@ class ImageToWordApp(ctk.CTk):
         self.imagePath = selectedPath
         self.fileLabel.configure(text=os.path.basename(selectedPath), text_color=textPrimary)
         self.updatePreview(selectedPath)
-        self.setStatus("Image loaded. Ready to convert.", successColor)
+        self.setStatus("Image loaded", textPrimary)
 
     def browseOutput(self):
         selectedDir = filedialog.askdirectory(title="Select Output Folder")
@@ -465,7 +460,7 @@ class ImageToWordApp(ctk.CTk):
             openedImg = Image.open(imgPath)
             canvasW = max(self.previewCanvas.winfo_width(), 100)
             canvasH = max(self.previewCanvas.winfo_height(), 100)
-            openedImg.thumbnail((canvasW - 30, canvasH - 30), Image.LANCZOS)
+            openedImg.thumbnail((canvasW - 40, canvasH - 40), Image.LANCZOS)
             self.tkImg = ImageTk.PhotoImage(openedImg)
             self.previewCanvas.delete("all")
             self.previewCanvas.create_image(
@@ -486,7 +481,7 @@ class ImageToWordApp(ctk.CTk):
                 os.remove(memoryPath)
             if os.path.exists(settingsPath):
                 os.remove(settingsPath)
-            self.setStatus("Agent memory successfully cleared.", successColor)
+            self.setStatus("Agent memory cleared", successColor)
 
     def startConversion(self):
         if self.isProcessing:
@@ -498,8 +493,8 @@ class ImageToWordApp(ctk.CTk):
         self.convertBtn.configure(state="disabled", text="Processing...")
         self.progressBar.start()
         
-        modeText = "Local" if self.localModeVar.get() else "Cloud AI"
-        self.setStatus(f"Processing image in {modeText} mode...", textMuted)
+        modeText = "Local Mode" if self.localModeVar.get() else "Cloud AI"
+        self.setStatus(f"Processing in {modeText}...", textMuted)
         
         threading.Thread(target=self.convertWorker, daemon=True).start()
 
@@ -534,8 +529,8 @@ class ImageToWordApp(ctk.CTk):
         self.progressBar.stop()
         self.progressBar.set(0)
         self.convertBtn.configure(state="normal", text="Convert to Word")
-        self.setStatus(f"Error: {errMsg}", errorColor)
-        messagebox.showerror("Conversion Failed", f"An error occurred:\n\n{errMsg}")
+        self.setStatus("Conversion failed", errorColor)
+        messagebox.showerror("Error", f"An error occurred:\n\n{errMsg}")
 
     def setStatus(self, statusMsg: str, statusColor: str = textPrimary):
         self.statusLabel.configure(text=statusMsg, text_color=statusColor)

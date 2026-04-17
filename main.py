@@ -14,18 +14,18 @@ sys.path.insert(0, baseDir)
 from src.ocr_engine       import runOcr
 from src.document_builder import buildDocx
 
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("dark-blue")
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
 
-# iOS 26 Futuristic Dark Theme Constants
-glassTint      = "#000000"   # Pure black base for OLED depth
-cardTint       = "#1c1c1e"   # Elevated iOS dark card color
-accentColor    = "#bf5af2"   # iOS System Purple
-accentHover    = "#da8fff"
-textPrimary    = "#ffffff"
+# iOS 26 Futuristic Light/Glass Theme Constants
+glassTint      = "#f2f2f7"   # iOS System Grouped Background (Light)
+cardTint       = "#ffffff"   # Pure white for cards, highly translucent
+accentColor    = "#af52de"   # iOS System Purple
+accentHover    = "#c86efd"
+textPrimary    = "#000000"   # Black text for HD clarity
 textMuted      = "#8e8e93"   # iOS System Gray
-successColor   = "#32d74b"   # iOS System Green
-errorColor     = "#ff453a"   # iOS System Red
+successColor   = "#34c759"   # iOS System Green
+errorColor     = "#ff3b30"   # iOS System Red
 fontFamily     = "Helvetica" # Closest universal fallback to SF Pro
 cardRadius     = 20          # Heavy squircle rounding typical of modern iOS
 
@@ -258,13 +258,13 @@ class ImageToWordApp(ctk.CTk):
         leftPanel.pack(side="left", fill="both", expand=True, padx=(0, 25))
         
         try:
-            pywinstyles.set_opacity(leftPanel, value=0.85)
+            pywinstyles.set_opacity(leftPanel, value=0.65)
         except Exception:
             pass
 
         self.previewCanvas = tk.Canvas(
             leftPanel,
-            bg=cardTint,
+            bg="#f2f2f7",
             highlightthickness=0,
             cursor="hand2",
         )
@@ -381,7 +381,7 @@ class ImageToWordApp(ctk.CTk):
         )
         self.statusLabel.pack(anchor="w", pady=(5, 10), padx=20)
 
-        self.progressBar = ctk.CTkProgressBar(statusCard, progress_color=accentColor, fg_color="#3a3a3c", height=6, corner_radius=3)
+        self.progressBar = ctk.CTkProgressBar(statusCard, progress_color=accentColor, fg_color="#e5e5ea", height=6, corner_radius=3)
         self.progressBar.pack(fill="x", padx=20, pady=(0, 20))
         self.progressBar.set(0)
 
@@ -399,7 +399,7 @@ class ImageToWordApp(ctk.CTk):
         cardWidget = ctk.CTkFrame(parent, fg_color=cardTint, corner_radius=cardRadius)
         cardWidget.pack(fill="x", pady=(0, 20))
         try:
-            pywinstyles.set_opacity(cardWidget, value=0.85)
+            pywinstyles.set_opacity(cardWidget, value=0.65)
         except Exception:
             pass
         

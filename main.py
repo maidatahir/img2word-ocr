@@ -130,6 +130,34 @@ class ImageToWordApp(ctk.CTk):
         self.buildUi()
         self.checkTesseract()
 
+        self.pastelColors = [(255, 209, 220), (230, 230, 250), (209, 236, 241), (212, 237, 218), (255, 243, 205)]
+        self.currentColorIndex = 0
+        self.nextColorIndex = 1
+        self.gradientStep = 0.0
+        self.animateBackground()
+
+    def animateBackground(self):
+        c1 = self.pastelColors[self.currentColorIndex]
+        c2 = self.pastelColors[self.nextColorIndex]
+        
+        r = int(c1[0] + (c2[0] - c1[0]) * self.gradientStep)
+        g = int(c1[1] + (c2[1] - c1[1]) * self.gradientStep)
+        b = int(c1[2] + (c2[2] - c1[2]) * self.gradientStep)
+        
+        hexColor = f"#{r:02x}{g:02x}{b:02x}"
+        self.configure(fg_color=hexColor)
+        
+        if hasattr(self, 'mainContainer'):
+            self.mainContainer.configure(fg_color="transparent")
+        
+        self.gradientStep += 0.005
+        if self.gradientStep >= 1.0:
+            self.gradientStep = 0.0
+            self.currentColorIndex = self.nextColorIndex
+            self.nextColorIndex = (self.nextColorIndex + 1) % len(self.pastelColors)
+            
+        self.after(50, self.animateBackground)
+
     def checkTermsAndConditions(self):
         # Always show for demonstration purposes when opened
         self.showTermsModal()
@@ -236,6 +264,7 @@ class ImageToWordApp(ctk.CTk):
         rightNav.pack(side="right", padx=20)
         
         ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.openChatbot, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
+        ctk.CTkButton(rightNav, text="📜 Privacy Terms", command=self.showTermsModal, fg_color="transparent", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
 
         # 2. Hero Section
         heroFrame = ctk.CTkFrame(self, fg_color="transparent")

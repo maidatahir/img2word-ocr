@@ -131,17 +131,8 @@ class ImageToWordApp(ctk.CTk):
         self.checkTesseract()
 
     def checkTermsAndConditions(self):
-        termsAccepted = False
-        if os.path.exists(settingsPath):
-            try:
-                with open(settingsPath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    termsAccepted = data.get("acceptedTerms", False)
-            except Exception:
-                pass
-
-        if not termsAccepted:
-            self.showTermsModal()
+        # Always show for demonstration purposes when opened
+        self.showTermsModal()
 
     def showTermsModal(self):
         modalWindow = ctk.CTkToplevel(self)
@@ -239,18 +230,12 @@ class ImageToWordApp(ctk.CTk):
         
         ctk.CTkLabel(leftNav, text="📝 Image To Text", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), text_color="#4f46e5").pack(side="left", padx=(0, 20))
         
-        navLinks = ["Image Translator", "JPG To Word", "JPG To Excel", "PDF To Excel"]
-        for link in navLinks:
-            lbl = ctk.CTkLabel(leftNav, text=link, font=ctk.CTkFont(family=fontFamily, size=13), text_color=textPrimary, cursor="hand2")
-            lbl.pack(side="left", padx=15)
-            if link == "JPG To Word":
-                lbl.configure(font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), text_color=accentColor)
+
 
         rightNav = ctk.CTkFrame(navFrame, fg_color="transparent")
         rightNav.pack(side="right", padx=20)
         
         ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.openChatbot, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
-        ctk.CTkButton(rightNav, text="📜 Privacy Terms", command=self.showTermsModal, fg_color="transparent", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
 
         # 2. Hero Section
         heroFrame = ctk.CTkFrame(self, fg_color="transparent")

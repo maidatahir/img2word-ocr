@@ -249,9 +249,8 @@ class ImageToWordApp(ctk.CTk):
         rightNav = ctk.CTkFrame(navFrame, fg_color="transparent")
         rightNav.pack(side="right", padx=20)
         
-        ctk.CTkButton(rightNav, text="💬 Live Chat", command=self.openChatbot, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
-        ctk.CTkLabel(rightNav, text="👑 Pricing", font=ctk.CTkFont(family=fontFamily, size=13), text_color=textPrimary, cursor="hand2").pack(side="left", padx=10)
-        ctk.CTkButton(rightNav, text="🔑 Login", command=self.showTermsModal, fg_color="transparent", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), hover_color="#f3f4f6", width=60).pack(side="left", padx=10)
+        ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.openChatbot, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
+        ctk.CTkButton(rightNav, text="📜 Privacy Terms", command=self.showTermsModal, fg_color="transparent", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
 
         # 2. Hero Section
         heroFrame = ctk.CTkFrame(self, fg_color="transparent")
@@ -259,9 +258,6 @@ class ImageToWordApp(ctk.CTk):
         
         ctk.CTkLabel(heroFrame, text="Image to Text Converter", font=ctk.CTkFont(family=fontFamily, size=34, weight="bold"), text_color=textPrimary).pack()
         ctk.CTkLabel(heroFrame, text="An offline image to text converter to extract text from images.", font=ctk.CTkFont(family=fontFamily, size=16), text_color=textMuted).pack(pady=(8, 18))
-        
-        badgeBtn = ctk.CTkButton(heroFrame, text="NEW   Batch Image to text - 1000 images at once  →", fg_color="#fff7ed", text_color="#ea580c", hover_color="#ffedd5", font=ctk.CTkFont(family=fontFamily, size=12, weight="bold"), corner_radius=20, border_width=1, border_color="#fdba74")
-        badgeBtn.pack()
 
         # 3. Main Container
         self.mainContainer = ctk.CTkFrame(self, fg_color="transparent")

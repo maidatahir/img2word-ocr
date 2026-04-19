@@ -17,12 +17,12 @@ ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
 # Web-Style Theme Constants
-bgTint         = "#f8f9fa"   # Very light gray (almost white) for page background
-cardTint       = "#ffffff"   # Pure white for main content box
-accentColor    = "#8c52ff"   # Prominent vibrant purple matching screenshot
+bgTint         = "#f8f9fa"   
+cardTint       = "#ffffff"   
+accentColor    = "#8c52ff"   
 accentHover    = "#7a3cf5"
-textPrimary    = "#212529"   # Dark gray/black
-textMuted      = "#6c757d"   # Secondary gray
+textPrimary    = "#212529"   
+textMuted      = "#6c757d"   
 successColor   = "#198754"   
 errorColor     = "#dc3545"   
 fontFamily     = "Helvetica" 
@@ -30,101 +30,20 @@ fontFamily     = "Helvetica"
 settingsPath   = os.path.join(baseDir, "settings.json")
 memoryPath     = os.path.join(baseDir, "user_memory.json")
 
-class AgentChatbot(ctk.CTkToplevel):
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.title("Live Chat (Agent Assistant)")
-        self.geometry("400x550")
-        self.configure(fg_color=bgTint)
-        self.attributes("-topmost", True)
-
-        self.chatHistory = ctk.CTkTextbox(
-            self,
-            fg_color=cardTint,
-            text_color=textPrimary,
-            font=ctk.CTkFont(family=fontFamily, size=13),
-            wrap="word",
-            state="disabled",
-            corner_radius=10,
-            border_width=1,
-            border_color="#dee2e6"
-        )
-        self.chatHistory.pack(fill="both", expand=True, padx=20, pady=(20, 15))
-
-        inputFrame = ctk.CTkFrame(self, fg_color="transparent")
-        inputFrame.pack(fill="x", padx=20, pady=(0, 20))
-
-        self.queryInput = ctk.CTkEntry(
-            inputFrame,
-            placeholder_text="Ask me anything...",
-            fg_color=cardTint,
-            text_color=textPrimary,
-            border_width=1,
-            border_color="#dee2e6",
-            corner_radius=8,
-            font=ctk.CTkFont(family=fontFamily, size=13),
-            height=40
-        )
-        self.queryInput.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        self.queryInput.bind("<Return>", lambda e: self.processQuery())
-
-        self.sendBtn = ctk.CTkButton(
-            inputFrame,
-            text="Send",
-            width=60,
-            height=40,
-            corner_radius=8,
-            fg_color=accentColor,
-            hover_color=accentHover,
-            text_color="#ffffff",
-            font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"),
-            command=self.processQuery
-        )
-        self.sendBtn.pack(side="right")
-
-        self.appendMessage("Agent", "Hello! I am your AI Assistant. You can ask me about local mode, clearing memory, or how this converter works.")
-
-    def appendMessage(self, sender: str, msg: str):
-        self.chatHistory.configure(state="normal")
-        self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
-        self.chatHistory.configure(state="disabled")
-        self.chatHistory.see("end")
-
-    def processQuery(self):
-        userText = self.queryInput.get().strip()
-        if not userText:
-            return
-        
-        self.queryInput.delete(0, "end")
-        self.appendMessage("You", userText)
-        
-        userTextLower = userText.lower()
-        if "local" in userTextLower or "privacy" in userTextLower:
-            replyText = "When 'Strict Local Mode' is enabled, I use local Tesseract OCR. No data is sent to cloud LLM APIs, ensuring total privacy."
-        elif "clear" in userTextLower or "memory" in userTextLower:
-            replyText = "You can clear my stored contextual memory by clearing settings. This deletes user_memory.json."
-        elif "how" in userTextLower or "work" in userTextLower:
-            replyText = "I preprocess your image, run OCR to detect text and spatial gaps, apply heuristics for formatting, and output a structured Word document."
-        elif "hello" in userTextLower or "hi" in userTextLower:
-            replyText = "Hello! Ready to convert some images?"
-        else:
-            replyText = "I'm a rule-based agent for now. I can help answer queries regarding privacy, local mode, and clearing memory."
-            
-        self.after(500, lambda: self.appendMessage("Agent", replyText))
-
-
 class ImageToWordApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Image to Text Converter")
-        self.geometry("1150x850")
-        self.minsize(900, 750)
+        self.geometry("1200x850")
+        self.minsize(1000, 750)
         self.configure(fg_color=bgTint)
 
         self.imagePath = None
         self.tkImg     = None
         self.isProcessing = False
-        self.chatbotWindow = None
+        
+        self.chatPanelWidth = 380
+        self.isChatOpen = False
 
         self.checkTermsAndConditions()
         self.buildUi()
@@ -147,6 +66,8 @@ class ImageToWordApp(ctk.CTk):
         hexColor = f"#{r:02x}{g:02x}{b:02x}"
         self.configure(fg_color=hexColor)
         
+        if hasattr(self, 'mainLayoutFrame'):
+            self.mainLayoutFrame.configure(fg_color="transparent")
         if hasattr(self, 'mainContainer'):
             self.mainContainer.configure(fg_color="transparent")
         
@@ -159,7 +80,6 @@ class ImageToWordApp(ctk.CTk):
         self.after(50, self.animateBackground)
 
     def checkTermsAndConditions(self):
-        # Always show for demonstration purposes when opened
         self.showTermsModal()
 
     def showTermsModal(self):
@@ -241,105 +161,149 @@ class ImageToWordApp(ctk.CTk):
         except Exception:
             messagebox.showerror(
                 "Tesseract Not Found",
-                "Tesseract OCR is not installed or not on PATH.\n\n"
-                "Please install it:\n"
-                "  winget install UB-Mannheim.TesseractOCR\n\n"
-                "Then restart this application.",
+                "Tesseract OCR is not installed or not on PATH."
             )
 
     def buildUi(self):
-        # 1. Top Navigation Bar
+        # Top Navbar
         navFrame = ctk.CTkFrame(self, height=65, fg_color=cardTint, corner_radius=0)
         navFrame.pack(fill="x", side="top")
         navFrame.pack_propagate(False)
 
         leftNav = ctk.CTkFrame(navFrame, fg_color="transparent")
         leftNav.pack(side="left", padx=20)
-        
-        ctk.CTkLabel(leftNav, text="📝 Image To Text", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), text_color="#4f46e5").pack(side="left", padx=(0, 20))
-        
-
+        ctk.CTkLabel(leftNav, text="📝 Image To Text", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), text_color="#4f46e5").pack(side="left")
 
         rightNav = ctk.CTkFrame(navFrame, fg_color="transparent")
         rightNav.pack(side="right", padx=20)
         
-        ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.openChatbot, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
-        ctk.CTkButton(rightNav, text="📜 Privacy Terms", command=self.showTermsModal, fg_color="transparent", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), hover_color="#f3f4f6", width=80).pack(side="left", padx=10)
+        self.chatToggleBtn = ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.toggleChatPanel, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=100)
+        self.chatToggleBtn.pack(side="left", padx=10)
 
-        # 2. Hero Section
-        heroFrame = ctk.CTkFrame(self, fg_color="transparent")
+        # Body Layout
+        self.bodyFrame = ctk.CTkFrame(self, fg_color="transparent")
+        self.bodyFrame.pack(fill="both", expand=True)
+
+        self.mainLayoutFrame = ctk.CTkFrame(self.bodyFrame, fg_color="transparent")
+        self.mainLayoutFrame.pack(side="left", fill="both", expand=True)
+
+        # Hero
+        heroFrame = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
         heroFrame.pack(fill="x", pady=(50, 20))
-        
         ctk.CTkLabel(heroFrame, text="Image to Text Converter", font=ctk.CTkFont(family=fontFamily, size=34, weight="bold"), text_color=textPrimary).pack()
         ctk.CTkLabel(heroFrame, text="An offline image to text converter to extract text from images.", font=ctk.CTkFont(family=fontFamily, size=16), text_color=textMuted).pack(pady=(8, 18))
 
-        # 3. Main Container
-        self.mainContainer = ctk.CTkFrame(self, fg_color="transparent")
+        # Main Container
+        self.mainContainer = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
         self.mainContainer.pack(fill="both", expand=True, padx=40, pady=(10, 40))
 
         self.buildUploadBox()
         self.buildPreviewBox()
-
         self.showUploadBox()
+
+        # Chat Panel
+        self.chatPanel = ctk.CTkFrame(self.bodyFrame, width=0, fg_color=cardTint, corner_radius=0, border_width=1, border_color="#e5e7eb")
+        self.chatPanel.pack(side="right", fill="y")
+        self.chatPanel.pack_propagate(False)
+        self.buildChatUi()
+
+    def buildChatUi(self):
+        chatHeader = ctk.CTkFrame(self.chatPanel, height=60, fg_color="transparent")
+        chatHeader.pack(fill="x", padx=20, pady=(20, 0))
+        ctk.CTkLabel(chatHeader, text="Agent Assistant", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=accentColor).pack(side="left")
+        ctk.CTkButton(chatHeader, text="✕", width=30, height=30, fg_color="transparent", text_color=textMuted, command=self.toggleChatPanel).pack(side="right")
+
+        self.chatHistory = ctk.CTkTextbox(self.chatPanel, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", state="disabled", corner_radius=10, border_width=1, border_color="#dee2e6")
+        self.chatHistory.pack(fill="both", expand=True, padx=20, pady=20)
+
+        inputFrame = ctk.CTkFrame(self.chatPanel, fg_color="transparent")
+        inputFrame.pack(fill="x", padx=20, pady=(0, 20))
+
+        self.queryInput = ctk.CTkEntry(inputFrame, placeholder_text="Ask me anything...", fg_color=bgTint, text_color=textPrimary, border_width=1, border_color="#dee2e6", corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=13), height=40)
+        self.queryInput.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.queryInput.bind("<Return>", lambda e: self.processQuery())
+
+        ctk.CTkButton(inputFrame, text="Send", width=60, height=40, corner_radius=8, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), command=self.processQuery).pack(side="right")
+
+        self.appendChatMessage("Agent", "Hello! I am your AI Assistant. How can I help you today?")
+
+    def toggleChatPanel(self):
+        if self.isChatOpen:
+            self.animateChatPanel(False)
+        else:
+            self.animateChatPanel(True)
+        self.isChatOpen = not self.isChatOpen
+
+    def animateChatPanel(self, opening):
+        currentWidth = self.chatPanel.winfo_width()
+        targetWidth = self.chatPanelWidth if opening else 0
+        
+        if opening:
+            if currentWidth < targetWidth:
+                newWidth = min(currentWidth + 40, targetWidth)
+                self.chatPanel.configure(width=newWidth)
+                self.after(10, lambda: self.animateChatPanel(True))
+        else:
+            if currentWidth > targetWidth:
+                newWidth = max(currentWidth - 40, targetWidth)
+                self.chatPanel.configure(width=newWidth)
+                self.after(10, lambda: self.animateChatPanel(False))
+
+    def appendChatMessage(self, sender, msg):
+        self.chatHistory.configure(state="normal")
+        self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
+        self.chatHistory.configure(state="disabled")
+        self.chatHistory.see("end")
+
+    def processQuery(self):
+        userText = self.queryInput.get().strip()
+        if not userText: return
+        self.queryInput.delete(0, "end")
+        self.appendChatMessage("You", userText)
+        
+        reply = "I'm a rule-based agent. I can help with privacy, memory, and OCR info!"
+        if "privacy" in userText.lower(): reply = "All processing is done locally on your machine. No data leaves your device."
+        elif "memory" in userText.lower(): reply = "You can clear agent memory anytime. It stores handwriting patterns locally."
+        
+        self.after(500, lambda: self.appendChatMessage("Agent", reply))
 
     def buildUploadBox(self):
         self.uploadFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
+        inner = ctk.CTkFrame(self.uploadFrame, fg_color="transparent")
+        inner.pack(expand=True)
+        ctk.CTkLabel(inner, text="Drop, Upload or Paste Images", font=ctk.CTkFont(family=fontFamily, size=20, weight="bold"), text_color=textPrimary).pack(pady=(40, 5))
+        ctk.CTkLabel(inner, text="Supported formats: JPG, PNG, GIF, JFIF, HEIC, PDF", font=ctk.CTkFont(family=fontFamily, size=14), text_color=textMuted).pack(pady=(0, 30))
+        btnF = ctk.CTkFrame(inner, fg_color="transparent")
+        btnF.pack(pady=10)
+        ctk.CTkButton(btnF, text="↑ Browse", command=self.browseImage, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), height=50, width=160, corner_radius=8).pack(side="left", padx=5)
+        ctk.CTkButton(btnF, text="🔗", fg_color="transparent", border_width=1, border_color=accentColor, text_color=accentColor, height=50, width=50, corner_radius=8).pack(side="left", padx=5)
         
-        innerFrame = ctk.CTkFrame(self.uploadFrame, fg_color="transparent")
-        innerFrame.pack(expand=True)
-
-        ctk.CTkLabel(innerFrame, text="Drop, Upload or Paste Images", font=ctk.CTkFont(family=fontFamily, size=20, weight="bold"), text_color=textPrimary).pack(pady=(40, 5))
-        ctk.CTkLabel(innerFrame, text="Supported formats: JPG, PNG, GIF, JFIF (JPEG), HEIC, PDF", font=ctk.CTkFont(family=fontFamily, size=14), text_color=textMuted).pack(pady=(0, 30))
-
-        btnFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
-        btnFrame.pack(pady=10)
-
-        ctk.CTkButton(btnFrame, text="↑ Browse", command=self.browseImage, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), height=50, width=160, corner_radius=8).pack(side="left", padx=5)
-        ctk.CTkButton(btnFrame, text="🔗", fg_color="transparent", border_width=1, border_color=accentColor, text_color=accentColor, hover_color="#f3ebff", height=50, width=50, corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=16)).pack(side="left", padx=5)
-
         self.ocrModeVar = ctk.StringVar(value="formatted")
-        
-        radioFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
-        radioFrame.pack(pady=30)
-
-        # Radio button 1
-        r1Frame = ctk.CTkFrame(radioFrame, fg_color="transparent", border_width=1, border_color="#e5e7eb", corner_radius=8)
-        r1Frame.pack(side="left", padx=10, ipadx=10, ipady=5)
-        ctk.CTkRadioButton(r1Frame, text="Simple OCR\nSimple plain text", variable=self.ocrModeVar, value="simple", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), fg_color=accentColor, border_width_checked=5).pack(pady=10, padx=10)
-
-        # Radio button 2
-        r2Frame = ctk.CTkFrame(radioFrame, fg_color="transparent", border_width=1, border_color="#e5e7eb", corner_radius=8)
-        r2Frame.pack(side="left", padx=10, ipadx=10, ipady=5)
-        ctk.CTkRadioButton(r2Frame, text="Formatted Text\nTable, list, headings etc.", variable=self.ocrModeVar, value="formatted", text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), fg_color=accentColor, border_width_checked=5).pack(pady=10, padx=10)
-
-        # Footer Privacy
-        ctk.CTkLabel(self.uploadFrame, text="*Your privacy is protected! No data is transmitted or stored.", font=ctk.CTkFont(family=fontFamily, size=12, slant="italic"), text_color=textMuted).pack(side="bottom", pady=20, anchor="w", padx=30)
+        radioF = ctk.CTkFrame(inner, fg_color="transparent")
+        radioF.pack(pady=30)
+        for m, t in [("simple", "Simple OCR\nPlain text"), ("formatted", "Formatted Text\nTables/Styles")]:
+            f = ctk.CTkFrame(radioF, fg_color="transparent", border_width=1, border_color="#e5e7eb", corner_radius=8)
+            f.pack(side="left", padx=10, ipadx=10, ipady=5)
+            ctk.CTkRadioButton(f, text=t, variable=self.ocrModeVar, value=m, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), fg_color=accentColor).pack(pady=10, padx=10)
+        ctk.CTkLabel(self.uploadFrame, text="*Your privacy is protected! No data is transmitted.", font=ctk.CTkFont(family=fontFamily, size=12, slant="italic"), text_color=textMuted).pack(side="bottom", pady=20, anchor="w", padx=30)
 
     def buildPreviewBox(self):
         self.previewFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
-        
         self.previewCanvas = tk.Canvas(self.previewFrame, bg=bgTint, highlightthickness=1, highlightbackground="#e5e7eb")
         self.previewCanvas.pack(fill="both", expand=True, padx=25, pady=(25, 10))
-        self.previewCanvas.bind("<Configure>", self.onCanvasResize)
-
+        self.previewCanvas.bind("<Configure>", lambda e: self.updatePreview(self.imagePath) if self.imagePath else None)
         self.progressBar = ctk.CTkProgressBar(self.previewFrame, progress_color=accentColor, fg_color="#e5e7eb", height=4, corner_radius=0)
         self.progressBar.set(0)
-
-        bottomBar = ctk.CTkFrame(self.previewFrame, fg_color="transparent", height=80)
-        bottomBar.pack(fill="x", side="bottom", padx=25, pady=(0, 20))
-        
-        self.fileLabel = ctk.CTkLabel(bottomBar, text="filename.png", font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"), text_color=textPrimary)
+        bottom = ctk.CTkFrame(self.previewFrame, fg_color="transparent", height=80)
+        bottom.pack(fill="x", side="bottom", padx=25, pady=(0, 20))
+        self.fileLabel = ctk.CTkLabel(bottom, text="", font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"), text_color=textPrimary)
         self.fileLabel.pack(side="left")
-
-        self.statusLabel = ctk.CTkLabel(bottomBar, text="", font=ctk.CTkFont(family=fontFamily, size=13), text_color=successColor)
+        self.statusLabel = ctk.CTkLabel(bottom, text="", font=ctk.CTkFont(family=fontFamily, size=13), text_color=successColor)
         self.statusLabel.pack(side="left", padx=25)
-
-        btnContainer = ctk.CTkFrame(bottomBar, fg_color="transparent")
-        btnContainer.pack(side="right")
-
-        ctk.CTkButton(btnContainer, text="Cancel", command=self.showUploadBox, fg_color="transparent", border_width=1, border_color=errorColor, text_color=errorColor, hover_color="#fee2e2", width=110, height=45, corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=14, weight="bold")).pack(side="left", padx=10)
-        
-        self.convertBtn = ctk.CTkButton(btnContainer, text="Convert to Word", command=self.startConversion, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", width=180, height=45, corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"))
+        btnC = ctk.CTkFrame(bottom, fg_color="transparent")
+        btnC.pack(side="right")
+        ctk.CTkButton(btnC, text="Cancel", command=self.showUploadBox, fg_color="transparent", border_width=1, border_color=errorColor, text_color=errorColor, width=110, height=45, corner_radius=8).pack(side="left", padx=10)
+        self.convertBtn = ctk.CTkButton(btnC, text="Convert to Word", command=self.startConversion, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", width=180, height=45, corner_radius=8)
         self.convertBtn.pack(side="right")
 
     def showUploadBox(self):
@@ -356,102 +320,50 @@ class ImageToWordApp(ctk.CTk):
         self.statusLabel.configure(text="Ready to process", text_color=textMuted)
         self.updatePreview(imgPath)
 
-    def onCanvasResize(self, event):
-        if self.imagePath:
-            self.updatePreview(self.imagePath)
-
     def browseImage(self):
-        selectedPath = filedialog.askopenfilename(
-            title="Select an Image",
-            filetypes=[
-                ("Image files", "*.jpg *.jpeg *.png *.bmp *.tiff *.tif"),
-                ("All files", "*.*"),
-            ],
-        )
-        if not selectedPath:
-            return
-        self.showPreviewBox(selectedPath)
+        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp *.tiff *.tif"), ("All", "*.*")])
+        if p: self.showPreviewBox(p)
 
-    def updatePreview(self, imgPath: str):
+    def updatePreview(self, imgPath):
         try:
-            openedImg = Image.open(imgPath)
-            canvasW = max(self.previewCanvas.winfo_width(), 100)
-            canvasH = max(self.previewCanvas.winfo_height(), 100)
-            openedImg.thumbnail((canvasW - 40, canvasH - 40), Image.LANCZOS)
-            self.tkImg = ImageTk.PhotoImage(openedImg)
+            i = Image.open(imgPath)
+            w = max(self.previewCanvas.winfo_width(), 100)
+            h = max(self.previewCanvas.winfo_height(), 100)
+            i.thumbnail((w-40, h-40), Image.LANCZOS)
+            self.tkImg = ImageTk.PhotoImage(i)
             self.previewCanvas.delete("all")
-            self.previewCanvas.create_image(
-                canvasW // 2, canvasH // 2, image=self.tkImg, anchor="center"
-            )
-        except Exception as excMsg:
-            self.setStatus(f"Preview error: {excMsg}", errorColor)
-
-    def openChatbot(self):
-        if self.chatbotWindow is None or not self.chatbotWindow.winfo_exists():
-            self.chatbotWindow = AgentChatbot(self)
-        else:
-            self.chatbotWindow.focus()
+            self.previewCanvas.create_image(w//2, h//2, image=self.tkImg)
+        except: pass
 
     def startConversion(self):
-        if self.isProcessing:
-            return
-        if not self.imagePath:
-            messagebox.showwarning("No Image", "Please select an image first.")
-            return
+        if self.isProcessing: return
         self.isProcessing = True
         self.convertBtn.configure(state="disabled", text="Processing...")
-        
         self.progressBar.pack(fill="x", padx=25, pady=(0, 10), before=self.previewCanvas.master.winfo_children()[-1])
         self.progressBar.start()
-        
-        self.setStatus("Processing securely offline...", textMuted)
         threading.Thread(target=self.convertWorker, daemon=True).start()
 
     def convertWorker(self):
         try:
-            # We enforce localMode=True since the UI guarantees "No data is transmitted"
-            ocrResult = runOcr(self.imagePath, localMode=True)
+            res = runOcr(self.imagePath, localMode=True)
+            out = os.path.join(os.path.dirname(self.imagePath), os.path.splitext(os.path.basename(self.imagePath))[0] + "_converted.docx")
+            buildDocx(res, out)
+            self.after(0, lambda: self.onSuccess(out))
+        except Exception as e:
+            self.after(0, lambda: self.onError(str(e)))
 
-            baseName  = os.path.splitext(os.path.basename(self.imagePath))[0]
-            outDir    = os.path.dirname(self.imagePath)
-            outputPath = os.path.join(outDir, f"{baseName}_converted.docx")
-
-            # Simple mode logic - we just ignore formatting if simple is chosen
-            # Our document_builder currently assumes full formatting dict. 
-            # If simple is selected, we could strip out formatting from ocrResult. 
-            # For MVP, we'll just pass it through and rely on document_builder.
-            # In a real implementation, we'd modify buildDocx to ignore styles.
-
-            buildDocx(ocrResult, outputPath)
-
-            self.after(0, self.onSuccess, outputPath)
-        except Exception as excMsg:
-            self.after(0, self.onError, str(excMsg))
-
-    def onSuccess(self, outputPath: str):
+    def onSuccess(self, out):
         self.isProcessing = False
         self.progressBar.stop()
-        self.progressBar.set(1)
         self.convertBtn.configure(state="normal", text="Convert to Word")
-        self.setStatus(f"Saved: {os.path.basename(outputPath)}", successColor)
-        if messagebox.askyesno(
-            "Conversion Complete",
-            f"Word document saved:\n{outputPath}\n\nOpen it now?",
-        ):
-            os.startfile(outputPath)
+        if messagebox.askyesno("Done", f"Saved to {out}\nOpen now?"): os.startfile(out)
 
-    def onError(self, errMsg: str):
+    def onError(self, err):
         self.isProcessing = False
         self.progressBar.stop()
-        self.progressBar.set(0)
         self.convertBtn.configure(state="normal", text="Convert to Word")
-        self.setStatus("Conversion failed", errorColor)
-        messagebox.showerror("Error", f"An error occurred:\n\n{errMsg}")
-
-    def setStatus(self, statusMsg: str, statusColor: str = textPrimary):
-        self.statusLabel.configure(text=statusMsg, text_color=statusColor)
-
+        messagebox.showerror("Error", err)
 
 if __name__ == "__main__":
-    appInstance = ImageToWordApp()
-    appInstance.mainloop()
+    app = ImageToWordApp()
+    app.mainloop()

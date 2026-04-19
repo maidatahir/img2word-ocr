@@ -43,6 +43,7 @@ class ImageToWordApp(ctk.CTk):
         self.isProcessing = False
         
         self.chatPanelWidth = 380
+        self.currentChatWidth = 0
         self.isChatOpen = False
         self.isAnimating = False
 
@@ -249,26 +250,26 @@ class ImageToWordApp(ctk.CTk):
             self.openChatPanel()
 
     def animateChatPanel(self, opening):
-        currentWidth = self.chatPanel.winfo_width()
         targetWidth = self.chatPanelWidth if opening else 0
         
-        step = 25
-        delay = 10
+        step = 35
+        delay = 15
         
         if opening:
-            if currentWidth < targetWidth:
-                newWidth = min(currentWidth + step, targetWidth)
-                self.chatPanel.configure(width=newWidth)
+            if self.currentChatWidth < targetWidth:
+                self.currentChatWidth = min(self.currentChatWidth + step, targetWidth)
+                self.chatPanel.configure(width=self.currentChatWidth)
                 self.after(delay, lambda: self.animateChatPanel(True))
             else:
                 self.isAnimating = False
         else:
-            if currentWidth > targetWidth:
-                newWidth = max(currentWidth - step, targetWidth)
-                self.chatPanel.configure(width=newWidth)
+            if self.currentChatWidth > targetWidth:
+                self.currentChatWidth = max(self.currentChatWidth - step, targetWidth)
+                self.chatPanel.configure(width=self.currentChatWidth)
                 self.after(delay, lambda: self.animateChatPanel(False))
             else:
-                self.chatPanel.configure(width=0) # Force absolute 0
+                self.currentChatWidth = 0
+                self.chatPanel.configure(width=0)
                 self.isAnimating = False
 
     def appendChatMessage(self, sender, msg):

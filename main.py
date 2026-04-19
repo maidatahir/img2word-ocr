@@ -212,7 +212,7 @@ class ImageToWordApp(ctk.CTk):
         chatHeader = ctk.CTkFrame(self.chatPanel, height=60, fg_color="transparent")
         chatHeader.pack(fill="x", padx=20, pady=(20, 0))
         ctk.CTkLabel(chatHeader, text="Agent Assistant", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=accentColor).pack(side="left")
-        ctk.CTkButton(chatHeader, text="✕", width=30, height=30, fg_color="transparent", text_color=textMuted, command=self.toggleChatPanel).pack(side="right")
+        ctk.CTkButton(chatHeader, text="✕", width=30, height=30, fg_color="transparent", text_color=textMuted, command=self.closeChatPanel).pack(side="right")
 
         self.chatHistory = ctk.CTkTextbox(self.chatPanel, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", state="disabled", corner_radius=10, border_width=1, border_color="#dee2e6")
         self.chatHistory.pack(fill="both", expand=True, padx=20, pady=20)
@@ -228,25 +228,32 @@ class ImageToWordApp(ctk.CTk):
 
         self.appendChatMessage("Agent", "Hello! I am your AI Assistant. How can I help you today?")
 
-    def toggleChatPanel(self):
-        if self.isAnimating:
+    def openChatPanel(self):
+        if self.isAnimating or self.isChatOpen:
             return
-        
         self.isAnimating = True
+        self.isChatOpen = True
+        self.animateChatPanel(True)
+
+    def closeChatPanel(self):
+        if self.isAnimating or not self.isChatOpen:
+            return
+        self.isAnimating = True
+        self.isChatOpen = False
+        self.animateChatPanel(False)
+
+    def toggleChatPanel(self):
         if self.isChatOpen:
-            self.animateChatPanel(False)
-            self.isChatOpen = False
+            self.closeChatPanel()
         else:
-            self.animateChatPanel(True)
-            self.isChatOpen = True
+            self.openChatPanel()
 
     def animateChatPanel(self, opening):
         currentWidth = self.chatPanel.winfo_width()
         targetWidth = self.chatPanelWidth if opening else 0
         
-        # Smoothness settings
-        step = 20
-        delay = 8
+        step = 25
+        delay = 10
         
         if opening:
             if currentWidth < targetWidth:
@@ -261,6 +268,7 @@ class ImageToWordApp(ctk.CTk):
                 self.chatPanel.configure(width=newWidth)
                 self.after(delay, lambda: self.animateChatPanel(False))
             else:
+                self.chatPanel.configure(width=0) # Force absolute 0
                 self.isAnimating = False
 
     def appendChatMessage(self, sender, msg):

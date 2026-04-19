@@ -44,6 +44,7 @@ class ImageToWordApp(ctk.CTk):
         
         self.chatPanelWidth = 380
         self.isChatOpen = False
+        self.isAnimating = False
 
         self.checkTermsAndConditions()
         self.buildUi()
@@ -228,26 +229,39 @@ class ImageToWordApp(ctk.CTk):
         self.appendChatMessage("Agent", "Hello! I am your AI Assistant. How can I help you today?")
 
     def toggleChatPanel(self):
+        if self.isAnimating:
+            return
+        
+        self.isAnimating = True
         if self.isChatOpen:
             self.animateChatPanel(False)
+            self.isChatOpen = False
         else:
             self.animateChatPanel(True)
-        self.isChatOpen = not self.isChatOpen
+            self.isChatOpen = True
 
     def animateChatPanel(self, opening):
         currentWidth = self.chatPanel.winfo_width()
         targetWidth = self.chatPanelWidth if opening else 0
         
+        # Smoothness settings
+        step = 20
+        delay = 8
+        
         if opening:
             if currentWidth < targetWidth:
-                newWidth = min(currentWidth + 40, targetWidth)
+                newWidth = min(currentWidth + step, targetWidth)
                 self.chatPanel.configure(width=newWidth)
-                self.after(10, lambda: self.animateChatPanel(True))
+                self.after(delay, lambda: self.animateChatPanel(True))
+            else:
+                self.isAnimating = False
         else:
             if currentWidth > targetWidth:
-                newWidth = max(currentWidth - 40, targetWidth)
+                newWidth = max(currentWidth - step, targetWidth)
                 self.chatPanel.configure(width=newWidth)
-                self.after(10, lambda: self.animateChatPanel(False))
+                self.after(delay, lambda: self.animateChatPanel(False))
+            else:
+                self.isAnimating = False
 
     def appendChatMessage(self, sender, msg):
         self.chatHistory.configure(state="normal")

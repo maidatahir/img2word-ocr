@@ -42,13 +42,11 @@ class ImageToWordApp(ctk.CTk):
         self.tkImg     = None
         self.isProcessing = False
         
-        # Side Panel Animation State
         self.isChatOpen = False
         self.isAnimating = False
-        self.currentRelX = 1.0 # 1.0 is hidden (off-screen to the right)
-        self.chatPanelWidthRel = 0.32 # 32% of window width
+        self.currentRelX = 1.0 
+        self.chatPanelWidthRel = 0.32
 
-        self.checkTermsAndConditions()
         self.buildUi()
         self.checkTesseract()
 
@@ -75,10 +73,7 @@ class ImageToWordApp(ctk.CTk):
             self.nextColorIndex = (self.nextColorIndex + 1) % len(self.pastelColors)
         self.after(50, self.animateBackground)
 
-    def checkTermsAndConditions(self):
-        self.showTermsModal()
-
-    def showTermsModal(self):
+    def showTermsModal(self, onAccept=None):
         modalWindow = ctk.CTkToplevel(self)
         modalWindow.title("Terms & Privacy")
         modalWindow.geometry("550x500")
@@ -109,11 +104,13 @@ class ImageToWordApp(ctk.CTk):
         def acceptTerms():
             with open(settingsPath, "w", encoding="utf-8") as f: json.dump({"acceptedTerms": True}, f)
             modalWindow.destroy()
-        def declineTerms(): sys.exit(0)
+            if onAccept: onAccept()
+
+        def declineTerms(): modalWindow.destroy()
 
         btnFrame = ctk.CTkFrame(modalWindow, fg_color="transparent")
         btnFrame.pack(pady=25)
-        ctk.CTkButton(btnFrame, text="Decline & Exit", command=declineTerms, fg_color="transparent", text_color=errorColor, font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")).pack(side="left", padx=15)
+        ctk.CTkButton(btnFrame, text="Decline", command=declineTerms, fg_color="transparent", text_color=errorColor, font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")).pack(side="left", padx=15)
         acceptBtn = ctk.CTkButton(btnFrame, text="I Accept", command=acceptTerms, fg_color="#d1d1d6", text_color="#ffffff", state="disabled", corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"))
         acceptBtn.pack(side="right", padx=15)
         self.wait_window(modalWindow)
@@ -129,11 +126,9 @@ class ImageToWordApp(ctk.CTk):
         self.navFrame = ctk.CTkFrame(self, height=65, fg_color=cardTint, corner_radius=0)
         self.navFrame.pack(fill="x", side="top")
         self.navFrame.pack_propagate(False)
-
         leftNav = ctk.CTkFrame(self.navFrame, fg_color="transparent")
         leftNav.pack(side="left", padx=20)
         ctk.CTkLabel(leftNav, text="📝 Image To Text", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), text_color="#4f46e5").pack(side="left")
-
         rightNav = ctk.CTkFrame(self.navFrame, fg_color="transparent")
         rightNav.pack(side="right", padx=20)
         ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.toggleChatPanel, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=100).pack(side="left")
@@ -141,20 +136,17 @@ class ImageToWordApp(ctk.CTk):
         # Main Body
         self.mainLayoutFrame = ctk.CTkFrame(self, fg_color="transparent")
         self.mainLayoutFrame.pack(fill="both", expand=True)
-
         heroFrame = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
         heroFrame.pack(fill="x", pady=(50, 20))
         ctk.CTkLabel(heroFrame, text="Image to Text Converter", font=ctk.CTkFont(family=fontFamily, size=34, weight="bold"), text_color=textPrimary).pack()
         ctk.CTkLabel(heroFrame, text="An offline image to text converter to extract text from images.", font=ctk.CTkFont(family=fontFamily, size=16), text_color=textMuted).pack(pady=(8, 18))
-
         self.mainContainer = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
         self.mainContainer.pack(fill="both", expand=True, padx=40, pady=(10, 40))
-
         self.buildUploadBox()
         self.buildPreviewBox()
         self.showUploadBox()
 
-        # Chat Panel (Initially off-screen)
+        # Chat Panel
         self.chatPanel = ctk.CTkFrame(self, fg_color=cardTint, corner_radius=15, border_width=2, border_color="#dee2e6")
         self.buildChatUi()
 
@@ -163,10 +155,8 @@ class ImageToWordApp(ctk.CTk):
         chatHeader.pack(fill="x", padx=20, pady=(20, 0))
         ctk.CTkLabel(chatHeader, text="Agent Assistant", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=accentColor).pack(side="left")
         ctk.CTkButton(chatHeader, text="✕", width=30, height=30, fg_color="transparent", text_color=textMuted, font=ctk.CTkFont(size=18), hover_color="#f3f4f6", command=self.closeChatPanel).pack(side="right")
-
         self.chatHistory = ctk.CTkTextbox(self.chatPanel, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", state="disabled", corner_radius=10, border_width=1, border_color="#dee2e6")
         self.chatHistory.pack(fill="both", expand=True, padx=20, pady=20)
-
         inputFrame = ctk.CTkFrame(self.chatPanel, fg_color="transparent")
         inputFrame.pack(fill="x", padx=20, pady=(0, 20))
         self.queryInput = ctk.CTkEntry(inputFrame, placeholder_text="Ask me anything...", fg_color=bgTint, text_color=textPrimary, border_width=1, border_color="#dee2e6", corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=13), height=40)
@@ -179,25 +169,20 @@ class ImageToWordApp(ctk.CTk):
         if self.isAnimating: return
         if self.isChatOpen: self.closeChatPanel()
         else: self.openChatPanel()
-
     def openChatPanel(self):
         if self.isAnimating or self.isChatOpen: return
         self.isAnimating = True
         self.isChatOpen = True
-        self.chatPanel.lift() # Ensure it overlaps
+        self.chatPanel.lift()
         self.animateChatPanel(True)
-
     def closeChatPanel(self):
         if self.isAnimating or not self.isChatOpen: return
         self.isAnimating = True
         self.isChatOpen = False
         self.animateChatPanel(False)
-
     def animateChatPanel(self, opening):
         targetRelX = (1.0 - self.chatPanelWidthRel) if opening else 1.0
-        step = 0.025 # Smooth incremental step
-        delay = 12   # Milliseconds between frames
-        
+        step, delay = 0.025, 12
         if opening:
             if self.currentRelX > targetRelX:
                 self.currentRelX = max(self.currentRelX - step, targetRelX)
@@ -218,14 +203,12 @@ class ImageToWordApp(ctk.CTk):
         self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
         self.chatHistory.configure(state="disabled")
         self.chatHistory.see("end")
-
     def processQuery(self):
         t = self.queryInput.get().strip()
         if not t: return
         self.queryInput.delete(0, "end")
         self.appendChatMessage("You", t)
         r = "I'm a rule-based agent. I handle privacy and memory locally!"
-        if "privacy" in t.lower(): r = "Everything is processed locally on your machine."
         self.after(500, lambda: self.appendChatMessage("Agent", r))
 
     def buildUploadBox(self):
@@ -278,8 +261,24 @@ class ImageToWordApp(ctk.CTk):
         self.statusLabel.configure(text="Ready to process", text_color=textMuted)
         self.updatePreview(imgPath)
     def browseImage(self):
+        # Only show terms if not accepted
+        termsAccepted = False
+        if os.path.exists(settingsPath):
+            try:
+                with open(settingsPath, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    termsAccepted = data.get("acceptedTerms", False)
+            except: pass
+        
+        if not termsAccepted:
+            self.showTermsModal(onAccept=self.actuallyBrowse)
+        else:
+            self.actuallyBrowse()
+            
+    def actuallyBrowse(self):
         p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp *.tiff *.tif"), ("All", "*.*")])
         if p: self.showPreviewBox(p)
+
     def updatePreview(self, imgPath):
         try:
             i = Image.open(imgPath)

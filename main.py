@@ -237,7 +237,6 @@ class ImageToWordApp(ctk.CTk):
         btnF = ctk.CTkFrame(inner, fg_color="transparent")
         btnF.pack(pady=10)
         ctk.CTkButton(btnF, text="↑ Browse", command=self.browseImage, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), height=50, width=160, corner_radius=8).pack(side="left", padx=5)
-        ctk.CTkButton(btnF, text="🔗", fg_color="transparent", border_width=1, border_color=accentColor, text_color=accentColor, height=50, width=50, corner_radius=8).pack(side="left", padx=5)
         self.ocrModeVar = ctk.StringVar(value="formatted")
         radioF = ctk.CTkFrame(inner, fg_color="transparent")
         radioF.pack(pady=30)

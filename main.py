@@ -261,19 +261,8 @@ class ImageToWordApp(ctk.CTk):
         self.statusLabel.configure(text="Ready to process", text_color=textMuted)
         self.updatePreview(imgPath)
     def browseImage(self):
-        # Only show terms if not accepted
-        termsAccepted = False
-        if os.path.exists(settingsPath):
-            try:
-                with open(settingsPath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    termsAccepted = data.get("acceptedTerms", False)
-            except: pass
-        
-        if not termsAccepted:
-            self.showTermsModal(onAccept=self.actuallyBrowse)
-        else:
-            self.actuallyBrowse()
+        # Force modal to show for demonstration purposes every time browse is clicked
+        self.showTermsModal(onAccept=self.actuallyBrowse)
             
     def actuallyBrowse(self):
         p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp *.tiff *.tif"), ("All", "*.*")])

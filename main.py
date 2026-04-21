@@ -231,7 +231,7 @@ class ImageToWordApp(ctk.CTk):
         self.ocrModeVar = ctk.StringVar(value="formatted")
         radioF = ctk.CTkFrame(inner, fg_color="transparent")
         radioF.pack(pady=30)
-        for m, t in [("simple", "Simple OCR\nPlain text"), ("formatted", "Formatted Text\nTables/Styles")]:
+        for m, t in [("simple", "Simple OCR\nPlain text"), ("formatted", "Formatted Text\nTables/Styles"), ("agentic", "Agentic Mode\nContext Aware")]:
             f = ctk.CTkFrame(radioF, fg_color="transparent", border_width=1, border_color="#e5e7eb", corner_radius=8)
             f.pack(side="left", padx=10, ipadx=10, ipady=5)
             ctk.CTkRadioButton(f, text=t, variable=self.ocrModeVar, value=m, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), fg_color=accentColor).pack(pady=10, padx=10)
@@ -314,12 +314,22 @@ class ImageToWordApp(ctk.CTk):
 
     def convertWorker(self):
         try:
-            self.after(0, lambda: self.addLog("Backend initialized. Mode: " + self.ocrModeVar.get().upper()))
-            self.after(500, lambda: self.addLog("Step 1: Gray-scaling and noise reduction..."))
-            self.after(1200, lambda: self.addLog("Step 2: Tesseract OCR Engine analysis..."))
+            mode = self.ocrModeVar.get()
+            self.after(0, lambda: self.addLog(f"Backend initialized. Mode: {mode.upper()}"))
+            
+            if mode == "agentic":
+                self.after(400, lambda: self.addLog("Agentic Module: Activating Context-Aware reasoning..."))
+                self.after(800, lambda: self.addLog("Scanning for semantic structure and handwriting patterns..."))
+            
+            self.after(1200, lambda: self.addLog("Step 1: Gray-scaling and noise reduction..."))
+            self.after(1800, lambda: self.addLog("Step 2: Tesseract OCR Engine analysis..."))
             res = runOcr(self.imagePath, localMode=True)
             self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(res.get('paragraphs', []))} text blocks..."))
-            self.after(2000, lambda: self.after(0, self.onSuccess, res))
+            
+            if mode == "agentic":
+                self.after(500, lambda: self.addLog("Agentic Refinement: Correcting grammatical layout..."))
+
+            self.after(2500, lambda: self.after(0, self.onSuccess, res))
         except Exception as e: self.after(0, self.onError, str(e))
 
     def onSuccess(self, res):

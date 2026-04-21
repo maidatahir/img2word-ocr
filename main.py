@@ -11,7 +11,7 @@ baseDir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, baseDir)
 
 from src.ocr_engine       import runOcr
-from src.document_builder import buildDocx
+from src.document_builder import buildDocx, buildPdf, buildTxt
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -40,8 +40,10 @@ class ImageToWordApp(ctk.CTk):
 
         self.imagePath = None
         self.tkImg     = None
+        self.ocrResult = None
         self.isProcessing = False
         
+        # Side Panel Animation State
         self.isChatOpen = False
         self.isAnimating = False
         self.currentRelX = 1.0 
@@ -105,7 +107,6 @@ class ImageToWordApp(ctk.CTk):
             with open(settingsPath, "w", encoding="utf-8") as f: json.dump({"acceptedTerms": True}, f)
             modalWindow.destroy()
             if onAccept: onAccept()
-
         def declineTerms(): modalWindow.destroy()
 
         btnFrame = ctk.CTkFrame(modalWindow, fg_color="transparent")
@@ -140,10 +141,13 @@ class ImageToWordApp(ctk.CTk):
         heroFrame.pack(fill="x", pady=(50, 20))
         ctk.CTkLabel(heroFrame, text="Image to Text Converter", font=ctk.CTkFont(family=fontFamily, size=34, weight="bold"), text_color=textPrimary).pack()
         ctk.CTkLabel(heroFrame, text="An offline image to text converter to extract text from images.", font=ctk.CTkFont(family=fontFamily, size=16), text_color=textMuted).pack(pady=(8, 18))
+
         self.mainContainer = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
         self.mainContainer.pack(fill="both", expand=True, padx=40, pady=(10, 40))
+
         self.buildUploadBox()
         self.buildPreviewBox()
+        self.buildResultBox()
         self.showUploadBox()
 
         # Chat Panel
@@ -171,14 +175,12 @@ class ImageToWordApp(ctk.CTk):
         else: self.openChatPanel()
     def openChatPanel(self):
         if self.isAnimating or self.isChatOpen: return
-        self.isAnimating = True
-        self.isChatOpen = True
+        self.isAnimating, self.isChatOpen = True, True
         self.chatPanel.lift()
         self.animateChatPanel(True)
     def closeChatPanel(self):
         if self.isAnimating or not self.isChatOpen: return
-        self.isAnimating = True
-        self.isChatOpen = False
+        self.isAnimating, self.isChatOpen = True, False
         self.animateChatPanel(False)
     def animateChatPanel(self, opening):
         targetRelX = (1.0 - self.chatPanelWidthRel) if opening else 1.0
@@ -203,6 +205,12 @@ class ImageToWordApp(ctk.CTk):
         self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
         self.chatHistory.configure(state="disabled")
         self.chatHistory.see("end")
+
+    def addLog(self, msg):
+        # Show the side panel if it's not open
+        if not self.isChatOpen: self.openChatPanel()
+        self.appendChatMessage("System", f"⚙️ {msg}")
+
     def processQuery(self):
         t = self.queryInput.get().strip()
         if not t: return
@@ -240,33 +248,104 @@ class ImageToWordApp(ctk.CTk):
         bottom.pack(fill="x", side="bottom", padx=25, pady=(0, 20))
         self.fileLabel = ctk.CTkLabel(bottom, text="", font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"), text_color=textPrimary)
         self.fileLabel.pack(side="left")
-        self.statusLabel = ctk.CTkLabel(bottom, text="", font=ctk.CTkFont(family=fontFamily, size=13), text_color=successColor)
-        self.statusLabel.pack(side="left", padx=25)
         btnC = ctk.CTkFrame(bottom, fg_color="transparent")
         btnC.pack(side="right")
         ctk.CTkButton(btnC, text="Cancel", command=self.showUploadBox, fg_color="transparent", border_width=1, border_color=errorColor, text_color=errorColor, width=110, height=45, corner_radius=8).pack(side="left", padx=10)
-        self.convertBtn = ctk.CTkButton(btnC, text="Convert to Word", command=self.startConversion, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", width=180, height=45, corner_radius=8)
+        self.convertBtn = ctk.CTkButton(btnC, text="Convert Now", command=self.startConversion, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", width=180, height=45, corner_radius=8)
         self.convertBtn.pack(side="right")
+
+    def buildResultBox(self):
+        self.resultFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
+        header = ctk.CTkFrame(self.resultFrame, fg_color="transparent")
+        header.pack(fill="x", padx=25, pady=(20, 10))
+        ctk.CTkLabel(header, text="Extraction Preview", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=textPrimary).pack(side="left")
+        ctk.CTkButton(header, text="← Start Over", command=self.showUploadBox, width=100, fg_color="transparent", text_color=accentColor, font=ctk.CTkFont(size=13, weight="bold")).pack(side="right")
+        
+        self.resultText = ctk.CTkTextbox(self.resultFrame, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", corner_radius=10, border_width=1, border_color="#dee2e6")
+        self.resultText.pack(fill="both", expand=True, padx=25, pady=10)
+        
+        footer = ctk.CTkFrame(self.resultFrame, fg_color="transparent", height=100)
+        footer.pack(fill="x", padx=25, pady=(10, 25))
+        ctk.CTkLabel(footer, text="Download as:", font=ctk.CTkFont(size=14, weight="bold"), text_color=textMuted).pack(side="left", padx=(0, 20))
+        
+        ctk.CTkButton(footer, text="📄 Word (.docx)", command=lambda: self.downloadResult("docx"), fg_color=accentColor, width=140, height=40, corner_radius=8).pack(side="left", padx=5)
+        ctk.CTkButton(footer, text="📑 PDF (.pdf)", command=lambda: self.downloadResult("pdf"), fg_color="#4f46e5", width=140, height=40, corner_radius=8).pack(side="left", padx=5)
+        ctk.CTkButton(footer, text="📝 Text (.txt)", command=lambda: self.downloadResult("txt"), fg_color=textMuted, width=140, height=40, corner_radius=8).pack(side="left", padx=5)
 
     def showUploadBox(self):
         self.previewFrame.pack_forget()
+        self.resultFrame.pack_forget()
         self.uploadFrame.pack(fill="both", expand=True)
         self.imagePath = None
     def showPreviewBox(self, imgPath):
         self.imagePath = imgPath
         self.fileLabel.configure(text=os.path.basename(imgPath))
         self.uploadFrame.pack_forget()
+        self.resultFrame.pack_forget()
         self.previewFrame.pack(fill="both", expand=True)
         self.progressBar.pack_forget()
-        self.statusLabel.configure(text="Ready to process", text_color=textMuted)
         self.updatePreview(imgPath)
+    def showResultBox(self, result):
+        self.ocrResult = result
+        self.previewFrame.pack_forget()
+        self.uploadFrame.pack_forget()
+        self.resultFrame.pack(fill="both", expand=True)
+        self.resultText.configure(state="normal")
+        self.resultText.delete("1.0", "end")
+        text = result.get("rawText", "")
+        if not text:
+            text = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
+        self.resultText.insert("1.0", text)
+        self.resultText.configure(state="disabled")
+
     def browseImage(self):
-        # Force modal to show for demonstration purposes every time browse is clicked
         self.showTermsModal(onAccept=self.actuallyBrowse)
-            
     def actuallyBrowse(self):
-        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png *.bmp *.tiff *.tif"), ("All", "*.*")])
+        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.png *.jpeg *.bmp"), ("All", "*.*")])
         if p: self.showPreviewBox(p)
+
+    def startConversion(self):
+        if self.isProcessing: return
+        self.isProcessing = True
+        self.convertBtn.configure(state="disabled", text="Working...")
+        self.progressBar.pack(fill="x", padx=25, pady=(0, 10), before=self.previewCanvas.master.winfo_children()[-1])
+        self.progressBar.start()
+        threading.Thread(target=self.convertWorker, daemon=True).start()
+
+    def convertWorker(self):
+        try:
+            self.after(0, lambda: self.addLog("Backend initialized. Mode: " + self.ocrModeVar.get().upper()))
+            self.after(500, lambda: self.addLog("Step 1: Gray-scaling and noise reduction..."))
+            self.after(1200, lambda: self.addLog("Step 2: Tesseract OCR Engine analysis..."))
+            res = runOcr(self.imagePath, localMode=True)
+            self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(res.get('paragraphs', []))} text blocks..."))
+            self.after(2000, lambda: self.after(0, self.onSuccess, res))
+        except Exception as e: self.after(0, self.onError, str(e))
+
+    def onSuccess(self, res):
+        self.isProcessing = False
+        self.progressBar.stop()
+        self.convertBtn.configure(state="normal", text="Convert Now")
+        self.addLog("Conversion successful! Switching to preview.")
+        self.showResultBox(res)
+
+    def onError(self, err):
+        self.isProcessing = False
+        self.progressBar.stop()
+        self.convertBtn.configure(state="normal", text="Convert Now")
+        messagebox.showerror("Error", err)
+
+    def downloadResult(self, fmt):
+        base = os.path.join(os.path.dirname(self.imagePath), os.path.splitext(os.path.basename(self.imagePath))[0])
+        try:
+            if fmt == "docx":
+                out = buildDocx(self.ocrResult, base + "_converted.docx")
+            elif fmt == "pdf":
+                out = buildPdf(self.ocrResult, base + "_converted.pdf")
+            else:
+                out = buildTxt(self.ocrResult, base + "_converted.txt")
+            if messagebox.askyesno("Success", f"Saved to {os.path.basename(out)}\nOpen now?"): os.startfile(out)
+        except Exception as e: messagebox.showerror("Save Error", str(e))
 
     def updatePreview(self, imgPath):
         try:
@@ -277,30 +356,6 @@ class ImageToWordApp(ctk.CTk):
             self.previewCanvas.delete("all")
             self.previewCanvas.create_image(w//2, h//2, image=self.tkImg)
         except: pass
-    def startConversion(self):
-        if self.isProcessing: return
-        self.isProcessing = True
-        self.convertBtn.configure(state="disabled", text="Processing...")
-        self.progressBar.pack(fill="x", padx=25, pady=(0, 10), before=self.previewCanvas.master.winfo_children()[-1])
-        self.progressBar.start()
-        threading.Thread(target=self.convertWorker, daemon=True).start()
-    def convertWorker(self):
-        try:
-            res = runOcr(self.imagePath, localMode=True)
-            out = os.path.join(os.path.dirname(self.imagePath), os.path.splitext(os.path.basename(self.imagePath))[0] + "_converted.docx")
-            buildDocx(res, out)
-            self.after(0, lambda: self.onSuccess(out))
-        except Exception as e: self.after(0, lambda: self.onError(str(e)))
-    def onSuccess(self, out):
-        self.isProcessing = False
-        self.progressBar.stop()
-        self.convertBtn.configure(state="normal", text="Convert to Word")
-        if messagebox.askyesno("Done", f"Saved to {out}\nOpen now?"): os.startfile(out)
-    def onError(self, err):
-        self.isProcessing = False
-        self.progressBar.stop()
-        self.convertBtn.configure(state="normal", text="Convert to Word")
-        messagebox.showerror("Error", err)
 
 if __name__ == "__main__":
     app = ImageToWordApp()

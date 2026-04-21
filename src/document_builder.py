@@ -2,6 +2,9 @@ import os
 from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 
 bodyFont      = "Calibri"
 headingFont   = "Calibri"
@@ -98,4 +101,34 @@ def buildDocx(ocrResult: dict, outputPath: str) -> str:
 
     os.makedirs(os.path.dirname(os.path.abspath(outputPath)), exist_ok=True)
     doc.save(outputPath)
+    return outputPath
+
+def buildPdf(ocrResult: dict, outputPath: str) -> str:
+    c = canvas.Canvas(outputPath, pagesize=letter)
+    width, height = letter
+    y_position = height - 1*inch
+    
+    text = ocrResult.get("rawText", "")
+    if not text:
+        lines = [p.get("text", "") for p in ocrResult.get("paragraphs", [])]
+        text = "\n".join(lines)
+    
+    c.setFont("Helvetica", 10)
+    for line in text.splitlines():
+        if y_position < 1*inch:
+            c.showPage()
+            y_position = height - 1*inch
+            c.setFont("Helvetica", 10)
+        c.drawString(1*inch, y_position, line)
+        y_position -= 15
+    c.save()
+    return outputPath
+
+def buildTxt(ocrResult: dict, outputPath: str) -> str:
+    text = ocrResult.get("rawText", "")
+    if not text:
+        lines = [p.get("text", "") for p in ocrResult.get("paragraphs", [])]
+        text = "\n".join(lines)
+    with open(outputPath, "w", encoding="utf-8") as f:
+        f.write(text)
     return outputPath

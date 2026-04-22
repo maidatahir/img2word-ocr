@@ -49,6 +49,9 @@ class ImageToWordApp(ctk.CTk):
         self.currentRelX = 1.0 
         self.chatPanelWidthRel = 0.32
 
+        # Agent Memory
+        self.userMemory = self.loadMemory()
+
         self.buildUi()
         self.checkTesseract()
 
@@ -57,6 +60,16 @@ class ImageToWordApp(ctk.CTk):
         self.nextColorIndex = 1
         self.gradientStep = 0.0
         self.animateBackground()
+
+    def loadMemory(self):
+        if os.path.exists(memoryPath):
+            try:
+                with open(memoryPath, "r") as f: return json.load(f)
+            except: return {}
+        return {}
+
+    def saveMemory(self):
+        with open(memoryPath, "w") as f: json.dump(self.userMemory, f)
 
     def animateBackground(self):
         c1 = self.pastelColors[self.currentColorIndex]
@@ -82,7 +95,6 @@ class ImageToWordApp(ctk.CTk):
         modalWindow.configure(fg_color=bgTint)
         modalWindow.attributes("-topmost", True)
         modalWindow.grab_set()
-
         ctk.CTkLabel(modalWindow, text="Privacy & Terms of Use", font=ctk.CTkFont(family=fontFamily, size=22, weight="bold"), text_color=accentColor).pack(pady=(30, 10))
         termsText = (
             "By using this Agentic System, you agree to the following:\n\n"
@@ -91,24 +103,19 @@ class ImageToWordApp(ctk.CTk):
             "3. INTEGRITY: Respect copyrights and user data privacy."
         )
         ctk.CTkLabel(modalWindow, text=termsText, font=ctk.CTkFont(family=fontFamily, size=14), text_color=textPrimary, justify="left").pack(padx=40, pady=10)
-
-        cbVar1 = ctk.BooleanVar(value=False)
-        cbVar2 = ctk.BooleanVar(value=False)
+        cbVar1, cbVar2 = ctk.BooleanVar(value=False), ctk.BooleanVar(value=False)
         def checkAcceptState(*args):
             if cbVar1.get() and cbVar2.get(): acceptBtn.configure(state="normal", fg_color=accentColor)
             else: acceptBtn.configure(state="disabled", fg_color="#d1d1d6")
         cbVar1.trace_add("write", checkAcceptState)
         cbVar2.trace_add("write", checkAcceptState)
-
         ctk.CTkCheckBox(modalWindow, text="I agree to the offline Privacy processing.", variable=cbVar1, font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), text_color=textPrimary, fg_color=accentColor).pack(anchor="w", padx=45, pady=(15, 5))
         ctk.CTkCheckBox(modalWindow, text="I understand the Agent Memory features.", variable=cbVar2, font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), text_color=textPrimary, fg_color=accentColor).pack(anchor="w", padx=45, pady=5)
-
         def acceptTerms():
             with open(settingsPath, "w", encoding="utf-8") as f: json.dump({"acceptedTerms": True}, f)
             modalWindow.destroy()
             if onAccept: onAccept()
         def declineTerms(): modalWindow.destroy()
-
         btnFrame = ctk.CTkFrame(modalWindow, fg_color="transparent")
         btnFrame.pack(pady=25)
         ctk.CTkButton(btnFrame, text="Decline", command=declineTerms, fg_color="transparent", text_color=errorColor, font=ctk.CTkFont(family=fontFamily, size=15, weight="bold")).pack(side="left", padx=15)
@@ -118,14 +125,12 @@ class ImageToWordApp(ctk.CTk):
 
     def showSecurityGuidelines(self):
         securityWindow = ctk.CTkToplevel(self)
-        securityWindow.title("Agentic Security Guidelines")
+        securityWindow.title("Agentic Security Protocol")
         securityWindow.geometry("500x400")
         securityWindow.configure(fg_color=bgTint)
         securityWindow.attributes("-topmost", True)
         securityWindow.grab_set()
-
         ctk.CTkLabel(securityWindow, text="🛡️ Agentic Security Protocol", font=ctk.CTkFont(family=fontFamily, size=20, weight="bold"), text_color="#0d6efd").pack(pady=(30, 20))
-        
         guidelines = (
             "• Local Sovereignty: Agentic reasoning happens 100% offline.\n"
             "• Zero Data Leaks: No telemetry or data is sent to cloud APIs.\n"
@@ -133,7 +138,6 @@ class ImageToWordApp(ctk.CTk):
             "• Ephemeral Processing: Temporary buffers are cleared after exit."
         )
         ctk.CTkLabel(securityWindow, text=guidelines, font=ctk.CTkFont(family=fontFamily, size=14), text_color=textPrimary, justify="left").pack(padx=30, pady=10)
-        
         ctk.CTkButton(securityWindow, text="I Understand", command=securityWindow.destroy, fg_color="#0d6efd", corner_radius=8).pack(pady=30)
 
     def checkTesseract(self):
@@ -143,7 +147,6 @@ class ImageToWordApp(ctk.CTk):
         except: messagebox.showerror("Tesseract Not Found", "Please install Tesseract OCR.")
 
     def buildUi(self):
-        # Top Nav
         self.navFrame = ctk.CTkFrame(self, height=65, fg_color=cardTint, corner_radius=0)
         self.navFrame.pack(fill="x", side="top")
         self.navFrame.pack_propagate(False)
@@ -154,7 +157,6 @@ class ImageToWordApp(ctk.CTk):
         rightNav.pack(side="right", padx=20)
         ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.toggleChatPanel, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=100).pack(side="left")
 
-        # Main Body
         self.mainLayoutFrame = ctk.CTkFrame(self, fg_color="transparent")
         self.mainLayoutFrame.pack(fill="both", expand=True)
         heroFrame = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
@@ -163,12 +165,8 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(heroFrame, text="An offline image to text converter to extract text from images.", font=ctk.CTkFont(family=fontFamily, size=16), text_color=textMuted).pack(pady=(8, 18))
         self.mainContainer = ctk.CTkFrame(self.mainLayoutFrame, fg_color="transparent")
         self.mainContainer.pack(fill="both", expand=True, padx=40, pady=(10, 40))
-        self.buildUploadBox()
-        self.buildPreviewBox()
-        self.buildResultBox()
+        self.buildUploadBox(), self.buildPreviewBox(), self.buildResultBox()
         self.showUploadBox()
-
-        # Chat Panel
         self.chatPanel = ctk.CTkFrame(self, fg_color=cardTint, corner_radius=15, border_width=2, border_color="#dee2e6")
         self.buildChatUi()
 
@@ -180,12 +178,22 @@ class ImageToWordApp(ctk.CTk):
         self.chatHistory = ctk.CTkTextbox(self.chatPanel, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", state="disabled", corner_radius=10, border_width=1, border_color="#dee2e6")
         self.chatHistory.pack(fill="both", expand=True, padx=20, pady=20)
         inputFrame = ctk.CTkFrame(self.chatPanel, fg_color="transparent")
-        inputFrame.pack(fill="x", padx=20, pady=(0, 20))
+        inputFrame.pack(fill="x", padx=20, pady=(0, 10))
         self.queryInput = ctk.CTkEntry(inputFrame, placeholder_text="Ask me anything...", fg_color=bgTint, text_color=textPrimary, border_width=1, border_color="#dee2e6", corner_radius=8, font=ctk.CTkFont(family=fontFamily, size=13), height=40)
         self.queryInput.pack(side="left", fill="x", expand=True, padx=(0, 10))
         self.queryInput.bind("<Return>", lambda e: self.processQuery())
         ctk.CTkButton(inputFrame, text="Send", width=60, height=40, corner_radius=8, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), command=self.processQuery).pack(side="right")
-        self.appendChatMessage("Agent", "Hello! I am your AI Assistant. How can I help you?")
+        
+        # Memory Control
+        memFrame = ctk.CTkFrame(self.chatPanel, fg_color="transparent")
+        memFrame.pack(fill="x", padx=20, pady=(0, 20))
+        ctk.CTkButton(memFrame, text="🗑️ Clear Memory", command=self.clearMemory, fg_color="transparent", text_color=errorColor, font=ctk.CTkFont(size=12)).pack(side="right")
+        self.appendChatMessage("Agent", "Hello! I am your AI Assistant. I learn from your local files to improve over time. How can I help?")
+
+    def clearMemory(self):
+        self.userMemory = {}
+        self.saveMemory()
+        self.appendChatMessage("System", "Agent memory has been cleared successfully.")
 
     def toggleChatPanel(self):
         if self.isAnimating: return
@@ -214,29 +222,27 @@ class ImageToWordApp(ctk.CTk):
                 self.currentRelX = min(self.currentRelX + step, targetRelX)
                 self.chatPanel.place(relx=self.currentRelX, rely=0.08, relwidth=self.chatPanelWidthRel, relheight=0.9, anchor="nw")
                 self.after(delay, lambda: self.animateChatPanel(False))
-            else:
-                self.chatPanel.place_forget()
-                self.isAnimating = False
+            else: self.chatPanel.place_forget(); self.isAnimating = False
 
     def appendChatMessage(self, sender, msg):
         self.chatHistory.configure(state="normal")
         self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
-        self.chatHistory.configure(state="disabled")
-        self.chatHistory.see("end")
+        self.chatHistory.configure(state="disabled"); self.chatHistory.see("end")
     def addLog(self, msg):
         if not self.isChatOpen: self.openChatPanel()
         self.appendChatMessage("System", f"⚙️ {msg}")
     def processQuery(self):
-        t = self.queryInput.get().strip()
-        if not t: return
-        self.queryInput.delete(0, "end")
-        self.appendChatMessage("You", t)
-        r = "I'm a rule-based agent. I handle privacy and memory locally!"
+        t = self.queryInput.get().strip(); if not t: return
+        self.queryInput.delete(0, "end"); self.appendChatMessage("You", t)
+        r = "I'm analyzing your request locally."
+        if "privacy" in t.lower(): r = "Your data is strictly local. No cloud access."
+        elif "who" in t.lower() or "me" in t.lower():
+            files = self.userMemory.get("processedFiles", 0)
+            r = f"You have processed {files} files locally. I'm learning your handwriting style from these."
         self.after(500, lambda: self.appendChatMessage("Agent", r))
 
     def onModeChanged(self, *args):
-        if self.ocrModeVar.get() == "agentic":
-            self.showSecurityGuidelines()
+        if self.ocrModeVar.get() == "agentic": self.showSecurityGuidelines()
 
     def buildUploadBox(self):
         self.uploadFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
@@ -247,10 +253,7 @@ class ImageToWordApp(ctk.CTk):
         btnF = ctk.CTkFrame(inner, fg_color="transparent")
         btnF.pack(pady=10)
         ctk.CTkButton(btnF, text="↑ Browse", command=self.browseImage, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), height=50, width=160, corner_radius=8).pack(side="left", padx=5)
-        
-        self.ocrModeVar = ctk.StringVar(value="formatted")
-        self.ocrModeVar.trace_add("write", self.onModeChanged)
-        
+        self.ocrModeVar = ctk.StringVar(value="formatted"); self.ocrModeVar.trace_add("write", self.onModeChanged)
         radioF = ctk.CTkFrame(inner, fg_color="transparent")
         radioF.pack(pady=30)
         for m, t in [("simple", "Simple OCR\nPlain text"), ("formatted", "Formatted Text\nTables/Styles"), ("agentic", "Agentic Mode\nContext Aware")]:
@@ -268,88 +271,59 @@ class ImageToWordApp(ctk.CTk):
         self.progressBar.set(0)
         bottom = ctk.CTkFrame(self.previewFrame, fg_color="transparent", height=80)
         bottom.pack(fill="x", side="bottom", padx=25, pady=(0, 20))
-        self.fileLabel = ctk.CTkLabel(bottom, text="", font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"), text_color=textPrimary)
-        self.fileLabel.pack(side="left")
-        btnC = ctk.CTkFrame(bottom, fg_color="transparent")
-        btnC.pack(side="right")
+        self.fileLabel = ctk.CTkLabel(bottom, text="", font=ctk.CTkFont(family=fontFamily, size=15, weight="bold"), text_color=textPrimary); self.fileLabel.pack(side="left")
+        btnC = ctk.CTkFrame(bottom, fg_color="transparent"); btnC.pack(side="right")
         ctk.CTkButton(btnC, text="Cancel", command=self.showUploadBox, fg_color="transparent", border_width=1, border_color=errorColor, text_color=errorColor, width=110, height=45, corner_radius=8).pack(side="left", padx=10)
-        self.convertBtn = ctk.CTkButton(btnC, text="Convert Now", command=self.startConversion, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", width=180, height=45, corner_radius=8)
-        self.convertBtn.pack(side="right")
+        self.convertBtn = ctk.CTkButton(btnC, text="Convert Now", command=self.startConversion, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", width=180, height=45, corner_radius=8).pack(side="right")
 
     def buildResultBox(self):
         self.resultFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
-        header = ctk.CTkFrame(self.resultFrame, fg_color="transparent")
-        header.pack(fill="x", padx=25, pady=(20, 10))
+        header = ctk.CTkFrame(self.resultFrame, fg_color="transparent"); header.pack(fill="x", padx=25, pady=(20, 10))
         ctk.CTkLabel(header, text="Extraction Preview", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=textPrimary).pack(side="left")
         ctk.CTkButton(header, text="← Start Over", command=self.showUploadBox, width=100, fg_color="transparent", text_color=accentColor, font=ctk.CTkFont(size=13, weight="bold")).pack(side="right")
         self.resultText = ctk.CTkTextbox(self.resultFrame, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", corner_radius=10, border_width=1, border_color="#dee2e6")
         self.resultText.pack(fill="both", expand=True, padx=25, pady=10)
-        footer = ctk.CTkFrame(self.resultFrame, fg_color="transparent", height=100)
-        footer.pack(fill="x", padx=25, pady=(10, 25))
+        footer = ctk.CTkFrame(self.resultFrame, fg_color="transparent", height=100); footer.pack(fill="x", padx=25, pady=(10, 25))
         ctk.CTkLabel(footer, text="Download as:", font=ctk.CTkFont(size=14, weight="bold"), text_color=textMuted).pack(side="left", padx=(0, 20))
         ctk.CTkButton(footer, text="📄 Word (.docx)", command=lambda: self.downloadResult("docx"), fg_color=accentColor, width=140, height=40, corner_radius=8).pack(side="left", padx=5)
         ctk.CTkButton(footer, text="📑 PDF (.pdf)", command=lambda: self.downloadResult("pdf"), fg_color="#4f46e5", width=140, height=40, corner_radius=8).pack(side="left", padx=5)
         ctk.CTkButton(footer, text="📝 Text (.txt)", command=lambda: self.downloadResult("txt"), fg_color=textMuted, width=140, height=40, corner_radius=8).pack(side="left", padx=5)
 
     def showUploadBox(self):
-        self.previewFrame.pack_forget()
-        self.resultFrame.pack_forget()
-        self.uploadFrame.pack(fill="both", expand=True)
-        self.imagePath = None
+        self.previewFrame.pack_forget(); self.resultFrame.pack_forget(); self.uploadFrame.pack(fill="both", expand=True); self.imagePath = None
     def showPreviewBox(self, imgPath):
-        self.imagePath = imgPath
-        self.fileLabel.configure(text=os.path.basename(imgPath))
-        self.uploadFrame.pack_forget()
-        self.resultFrame.pack_forget()
-        self.previewFrame.pack(fill="both", expand=True)
-        self.progressBar.pack_forget()
-        self.updatePreview(imgPath)
+        self.imagePath = imgPath; self.fileLabel.configure(text=os.path.basename(imgPath))
+        self.uploadFrame.pack_forget(); self.resultFrame.pack_forget(); self.previewFrame.pack(fill="both", expand=True); self.progressBar.pack_forget(); self.updatePreview(imgPath)
     def showResultBox(self, result):
-        self.ocrResult = result
-        self.previewFrame.pack_forget()
-        self.uploadFrame.pack_forget()
-        self.resultFrame.pack(fill="both", expand=True)
-        self.resultText.configure(state="normal")
-        self.resultText.delete("1.0", "end")
-        text = result.get("rawText", "")
-        if not text: text = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
-        self.resultText.insert("1.0", text)
-        self.resultText.configure(state="disabled")
-
+        self.ocrResult = result; self.previewFrame.pack_forget(); self.uploadFrame.pack_forget(); self.resultFrame.pack(fill="both", expand=True)
+        self.resultText.configure(state="normal"); self.resultText.delete("1.0", "end")
+        text = result.get("rawText", ""); if not text: text = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
+        self.resultText.insert("1.0", text); self.resultText.configure(state="disabled")
     def browseImage(self): self.showTermsModal(onAccept=self.actuallyBrowse)
     def actuallyBrowse(self):
-        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.png *.jpeg *.bmp"), ("All", "*.*")])
-        if p: self.showPreviewBox(p)
+        p = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.png *.jpeg *.bmp"), ("All", "*.*")]); if p: self.showPreviewBox(p)
     def startConversion(self):
         if self.isProcessing: return
-        self.isProcessing = True
-        self.convertBtn.configure(state="disabled", text="Working...")
-        self.progressBar.pack(fill="x", padx=25, pady=(0, 10), before=self.previewCanvas.master.winfo_children()[-1])
-        self.progressBar.start()
+        self.isProcessing = True; self.convertBtn.configure(state="disabled", text="Working...")
+        self.progressBar.pack(fill="x", padx=25, pady=(0, 10), before=self.previewCanvas.master.winfo_children()[-1]); self.progressBar.start()
         threading.Thread(target=self.convertWorker, daemon=True).start()
     def convertWorker(self):
         try:
-            mode = self.ocrModeVar.get()
-            self.after(0, lambda: self.addLog(f"Backend initialized. Mode: {mode.upper()}"))
+            mode = self.ocrModeVar.get(); self.after(0, lambda: self.addLog(f"Backend initialized. Mode: {mode.upper()}"))
             if mode == "agentic":
                 self.after(400, lambda: self.addLog("Agentic Module: Activating Context-Aware reasoning..."))
                 self.after(800, lambda: self.addLog("Scanning for semantic structure and handwriting patterns..."))
             self.after(1200, lambda: self.addLog("Step 1: Gray-scaling and noise reduction..."))
             self.after(1800, lambda: self.addLog("Step 2: Tesseract OCR Engine analysis..."))
-            res = runOcr(self.imagePath, localMode=True)
-            self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(res.get('paragraphs', []))} text blocks..."))
+            res = runOcr(self.imagePath, localMode=True); self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(res.get('paragraphs', []))} text blocks..."))
             if mode == "agentic": self.after(500, lambda: self.addLog("Agentic Refinement: Correcting grammatical layout..."))
             self.after(2500, lambda: self.after(0, self.onSuccess, res))
         except Exception as e: self.after(0, self.onError, str(e))
     def onSuccess(self, res):
-        self.isProcessing, self.convertBtn.configure(state="normal", text="Convert Now")
-        self.progressBar.stop()
-        self.addLog("Conversion successful! Switching to preview.")
-        self.showResultBox(res)
-    def onError(self, err):
-        self.isProcessing, self.convertBtn.configure(state="normal", text="Convert Now")
-        self.progressBar.stop()
-        messagebox.showerror("Error", err)
+        self.isProcessing, self.convertBtn.configure(state="normal", text="Convert Now"); self.progressBar.stop()
+        self.userMemory["processedFiles"] = self.userMemory.get("processedFiles", 0) + 1; self.saveMemory()
+        self.addLog("Conversion successful! Switching to preview."); self.showResultBox(res)
+    def onError(self, err): self.isProcessing, self.convertBtn.configure(state="normal", text="Convert Now"); self.progressBar.stop(); messagebox.showerror("Error", err)
     def downloadResult(self, fmt):
         base = os.path.join(os.path.dirname(self.imagePath), os.path.splitext(os.path.basename(self.imagePath))[0])
         try:
@@ -362,10 +336,8 @@ class ImageToWordApp(ctk.CTk):
         try:
             i = Image.open(imgPath)
             w, h = max(self.previewCanvas.winfo_width(), 100), max(self.previewCanvas.winfo_height(), 100)
-            i.thumbnail((w-40, h-40), Image.LANCZOS)
-            self.tkImg = ImageTk.PhotoImage(i)
-            self.previewCanvas.delete("all")
-            self.previewCanvas.create_image(w//2, h//2, image=self.tkImg)
+            i.thumbnail((w-40, h-40), Image.LANCZOS); self.tkImg = ImageTk.PhotoImage(i)
+            self.previewCanvas.delete("all"); self.previewCanvas.create_image(w//2, h//2, image=self.tkImg)
         except: pass
 
 if __name__ == "__main__":

@@ -41,7 +41,6 @@ def addHeading(doc: Document, headingText: str, headingLevel: int = 1):
 def addBodyParagraph(doc: Document, block: dict):
     bodyPara = doc.add_paragraph()
     applyParagraphFormat(bodyPara, block.get("alignment", "LEFT"))
-
     runsList = block.get("runs", [])
     if runsList:
         for runData in runsList:
@@ -54,25 +53,20 @@ def addBodyParagraph(doc: Document, block: dict):
         plainRun = bodyPara.add_run(block.get("text", ""))
         plainRun.font.name = bodyFont
         plainRun.font.size = Pt(bodyFontSize)
-
     return bodyPara
 
 
 def buildDocx(ocrResult: dict, outputPath: str) -> str:
     doc = Document()
-
     for docSection in doc.sections:
         docSection.top_margin    = Inches(1.0)
         docSection.bottom_margin = Inches(1.0)
         docSection.left_margin   = Inches(1.25)
         docSection.right_margin  = Inches(1.25)
-
     normalStyle = doc.styles["Normal"]
     normalStyle.font.name = bodyFont
     normalStyle.font.size = Pt(bodyFontSize)
-
     paragraphList = ocrResult.get("paragraphs", [])
-
     if not paragraphList:
         rawContent = ocrResult.get("rawText", "")
         for rawLine in rawContent.splitlines():
@@ -91,44 +85,42 @@ def buildDocx(ocrResult: dict, outputPath: str) -> str:
             if not blockText:
                 doc.add_paragraph()
                 continue
-
             if block.get("isHeading"):
                 headingCount += 1
                 headingLevel = 1 if headingCount == 1 else 2
                 addHeading(doc, blockText, headingLevel=headingLevel)
             else:
                 addBodyParagraph(doc, block)
-
     os.makedirs(os.path.dirname(os.path.abspath(outputPath)), exist_ok=True)
     doc.save(outputPath)
     return outputPath
 
+
 def buildPdf(ocrResult: dict, outputPath: str) -> str:
-    c = canvas.Canvas(outputPath, pagesize=letter)
-    width, height = letter
-    y_position = height - 1*inch
-    
-    text = ocrResult.get("rawText", "")
-    if not text:
+    pdfCanvas = canvas.Canvas(outputPath, pagesize=letter)
+    pageWidth, pageHeight = letter
+    yPosition = pageHeight - 1*inch
+    rawText = ocrResult.get("rawText", "")
+    if not rawText:
         lines = [p.get("text", "") for p in ocrResult.get("paragraphs", [])]
-        text = "\n".join(lines)
-    
-    c.setFont("Helvetica", 10)
-    for line in text.splitlines():
-        if y_position < 1*inch:
-            c.showPage()
-            y_position = height - 1*inch
-            c.setFont("Helvetica", 10)
-        c.drawString(1*inch, y_position, line)
-        y_position -= 15
-    c.save()
+        rawText = "\n".join(lines)
+    pdfCanvas.setFont("Helvetica", 10)
+    for line in rawText.splitlines():
+        if yPosition < 1*inch:
+            pdfCanvas.showPage()
+            yPosition = pageHeight - 1*inch
+            pdfCanvas.setFont("Helvetica", 10)
+        pdfCanvas.drawString(1*inch, yPosition, line)
+        yPosition -= 15
+    pdfCanvas.save()
     return outputPath
 
+
 def buildTxt(ocrResult: dict, outputPath: str) -> str:
-    text = ocrResult.get("rawText", "")
-    if not text:
+    rawText = ocrResult.get("rawText", "")
+    if not rawText:
         lines = [p.get("text", "") for p in ocrResult.get("paragraphs", [])]
-        text = "\n".join(lines)
+        rawText = "\n".join(lines)
     with open(outputPath, "w", encoding="utf-8") as f:
-        f.write(text)
+        f.write(rawText)
     return outputPath

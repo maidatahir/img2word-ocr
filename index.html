@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image To Text | Agentic OCR Utility</title>
+    <style>
+        :root {
+            --primary: #8c52ff;
+            --accent: #4f46e5;
+            --bg: #f8f9fa;
+            --text: #212529;
+            --muted: #6c757d;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+
+        body {
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            min-height: 100vh;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            padding: 2rem 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--accent); letter-spacing: -1px; }
+
+        .hero {
+            padding: 4rem 10% 8rem 10%;
+            text-align: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 700px;
+            margin: 0 auto 2.5rem auto;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1.2rem 2.5rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(140, 82, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(140, 82, 255, 0.4);
+        }
+
+        .showcase {
+            position: relative;
+            margin-top: -4rem;
+            display: flex;
+            justify-content: center;
+            padding: 0 10%;
+        }
+
+        .mockup {
+            background: white;
+            padding: 10px;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 1000px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .features {
+            padding: 8rem 10%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid white;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover { transform: translateY(-10px); }
+
+        .feature-card h3 { margin-bottom: 1rem; color: var(--accent); }
+        .feature-card p { color: var(--muted); line-height: 1.5; }
+
+        footer {
+            padding: 4rem 10%;
+            text-align: center;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            color: var(--muted);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(140, 82, 255, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            filter: blur(40px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">AGENTIC OCR</div>
+        <div class="links">
+            <a href="https://github.com/maidatahir/img2word-ocr" class="btn" style="padding: 0.8rem 1.5rem; font-size: 0.9rem;">View Source</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="blob" style="top: 0; left: 10%;"></div>
+        <div class="blob" style="bottom: 10%; right: 10%; background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);"></div>
+        
+        <h1>Image to Text,<br>Elevated with AI.</h1>
+        <p>A professional desktop utility that combines local OCR with agentic intelligence. 100% private, 100% offline.</p>
+        <a href="https://github.com/maidatahir/img2word-ocr/archive/refs/heads/main.zip" class="btn">Download Desktop App</a>
+    </section>
+
+    <div class="showcase">
+        <div class="mockup">
+            <div style="width: 100%; height: 500px; background: #f0f0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #999;">
+                <h2 style="font-weight: 300;">Product Interface Preview</h2>
+            </div>
+        </div>
+    </div>
+
+    <section class="features">
+        <div class="feature-card">
+            <h3>🧠 Agentic Core</h3>
+            <p>Built-in AI assistant that learns your handwriting and layout patterns to improve accuracy over time.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🔒 Privacy First</h3>
+            <p>Your documents never leave your machine. All processing is handled locally using high-performance engines.</p>
+        </div>
+        <div class="feature-card">
+            <h3>📄 Multi-Format</h3>
+            <p>Export directly to Microsoft Word, PDF, or Plain Text with one click while preserving formatting.</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Image To Text Converter | Final Year Project</p>
+    </footer>
+</body>
+</html>

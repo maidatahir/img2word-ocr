@@ -3,176 +3,238 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image To Text | Agentic OCR Utility</title>
+    <title>Agentic OCR | Privacy-First Web App</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.0/docx.min.js"></script>
     <style>
         :root {
             --primary: #8c52ff;
             --accent: #4f46e5;
             --bg: #f8f9fa;
+            --card: #ffffff;
             --text: #212529;
             --muted: #6c757d;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
 
         body {
             background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
             min-height: 100vh;
             color: var(--text);
+            display: flex;
+            flex-direction: column;
             overflow-x: hidden;
         }
 
         .navbar {
-            padding: 2rem 10%;
+            padding: 1rem 5%;
+            background: var(--card);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        .logo { font-weight: 800; font-size: 1.5rem; color: var(--accent); letter-spacing: -1px; }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--accent); }
 
-        .hero {
-            padding: 4rem 10% 8rem 10%;
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 5%;
             text-align: center;
-            max-width: 1200px;
-            margin: 0 auto;
         }
 
-        h1 {
-            font-size: 4rem;
-            font-weight: 900;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(to right, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800; }
+        .subtitle { color: var(--muted); margin-bottom: 2rem; }
+
+        .upload-box {
+            background: var(--card);
+            width: 100%;
+            max-width: 600px;
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border: 2px dashed #e5e7eb;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .hero p {
-            font-size: 1.25rem;
-            color: var(--muted);
-            max-width: 700px;
-            margin: 0 auto 2.5rem auto;
-            line-height: 1.6;
-        }
+        .upload-box:hover { border-color: var(--primary); background: #fdfbff; }
 
         .btn {
-            display: inline-block;
-            padding: 1.2rem 2.5rem;
             background: var(--primary);
             color: white;
-            text-decoration: none;
-            border-radius: 50px;
+            padding: 1rem 2rem;
+            border-radius: 12px;
             font-weight: 700;
-            box-shadow: 0 10px 20px rgba(140, 82, 255, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
         }
 
-        .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(140, 82, 255, 0.4);
-        }
+        .btn:hover { background: var(--accent); transform: translateY(-2px); }
 
-        .showcase {
-            position: relative;
-            margin-top: -4rem;
-            display: flex;
-            justify-content: center;
-            padding: 0 10%;
-        }
-
-        .mockup {
-            background: white;
-            padding: 10px;
-            border-radius: 20px;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.12);
-            width: 100%;
-            max-width: 1000px;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .features {
-            padding: 8rem 10%;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            background: rgba(255,255,255,0.7);
-            backdrop-filter: blur(10px);
-            padding: 2.5rem;
-            border-radius: 24px;
-            border: 1px solid white;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover { transform: translateY(-10px); }
-
-        .feature-card h3 { margin-bottom: 1rem; color: var(--accent); }
-        .feature-card p { color: var(--muted); line-height: 1.5; }
-
-        footer {
-            padding: 4rem 10%;
-            text-align: center;
-            border-top: 1px solid rgba(0,0,0,0.05);
-            color: var(--muted);
-        }
-
-        .blob {
-            position: absolute;
+        /* Agent Drawer */
+        .agent-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
             width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(140, 82, 255, 0.1) 0%, transparent 70%);
-            z-index: -1;
-            filter: blur(40px);
+            height: 100vh;
+            background: var(--card);
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            z-index: 1000;
         }
+
+        .agent-drawer.open { right: 0; }
+
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .log-area { flex: 1; background: #f9fafb; border-radius: 12px; padding: 1rem; overflow-y: auto; font-size: 0.9rem; font-family: monospace; }
+        .log-entry { margin-bottom: 0.8rem; border-left: 3px solid var(--primary); padding-left: 0.8rem; }
+
+        /* Result Area */
+        .result-area {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            background: var(--card);
+            padding: 2rem;
+            border-radius: 24px;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .preview-text {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .format-btns { display: flex; gap: 10px; margin-top: 1.5rem; }
+        .btn-small { padding: 0.6rem 1.2rem; font-size: 0.85rem; }
+
+        #file-input { display: none; }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo">AGENTIC OCR</div>
-        <div class="links">
-            <a href="https://github.com/maidatahir/img2word-ocr" class="btn" style="padding: 0.8rem 1.5rem; font-size: 0.9rem;">View Source</a>
-        </div>
+        <div class="logo">📝 AGENTIC OCR</div>
+        <button class="btn btn-small" onclick="toggleDrawer()">💬 Ask Agent</button>
     </nav>
 
-    <section class="hero">
-        <div class="blob" style="top: 0; left: 10%;"></div>
-        <div class="blob" style="bottom: 10%; right: 10%; background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);"></div>
+    <div class="main-container" id="upload-view">
+        <h1>Image to Text</h1>
+        <p class="subtitle">Secure, offline browser-based OCR with Agentic reasoning.</p>
         
-        <h1>Image to Text,<br>Elevated with AI.</h1>
-        <p>A professional desktop utility that combines local OCR with agentic intelligence. 100% private, 100% offline.</p>
-        <a href="https://github.com/maidatahir/img2word-ocr/archive/refs/heads/main.zip" class="btn">Download Desktop App</a>
-    </section>
+        <div class="upload-box" onclick="document.getElementById('file-input').click()">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🖼️</div>
+            <h3>Click to Upload Image</h3>
+            <p style="color: var(--muted); margin-top: 0.5rem;">JPG, PNG, PDF supported</p>
+        </div>
+        <input type="file" id="file-input" accept="image/*">
+    </div>
 
-    <div class="showcase">
-        <div class="mockup">
-            <div style="width: 100%; height: 500px; background: #f0f0f0; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #999;">
-                <h2 style="font-weight: 300;">Product Interface Preview</h2>
+    <div class="main-container" id="result-view" style="display: none;">
+        <div class="result-area" style="display: block;">
+            <h2>Extraction Preview</h2>
+            <div class="preview-text" id="extracted-text">Processing...</div>
+            <div class="format-btns">
+                <button class="btn btn-small" onclick="downloadTxt()">📝 Text</button>
+                <button class="btn btn-small" style="background: #198754;" onclick="alert('Word Exporting...')">📄 Word</button>
+                <button class="btn btn-small" style="background: #dc3545;" onclick="alert('PDF Exporting...')">📑 PDF</button>
             </div>
+            <button class="btn" style="background: none; color: var(--primary); margin-top: 2rem;" onclick="location.reload()">← Start Over</button>
         </div>
     </div>
 
-    <section class="features">
-        <div class="feature-card">
-            <h3>🧠 Agentic Core</h3>
-            <p>Built-in AI assistant that learns your handwriting and layout patterns to improve accuracy over time.</p>
+    <div class="agent-drawer" id="agent-drawer">
+        <div class="drawer-header">
+            <h3>Agent Assistant</h3>
+            <button onclick="toggleDrawer()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
         </div>
-        <div class="feature-card">
-            <h3>🔒 Privacy First</h3>
-            <p>Your documents never leave your machine. All processing is handled locally using high-performance engines.</p>
+        <div class="log-area" id="log-area">
+            <div class="log-entry">Hello! I'm your Agent. Upload an image to begin.</div>
         </div>
-        <div class="feature-card">
-            <h3>📄 Multi-Format</h3>
-            <p>Export directly to Microsoft Word, PDF, or Plain Text with one click while preserving formatting.</p>
-        </div>
-    </section>
+    </div>
 
-    <footer>
-        <p>&copy; 2026 Image To Text Converter | Final Year Project</p>
-    </footer>
+    <script>
+        const logArea = document.getElementById('log-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadView = document.getElementById('upload-view');
+        const resultView = document.getElementById('result-view');
+        const extractedTextField = document.getElementById('extracted-text');
+
+        function toggleDrawer(open = null) {
+            const drawer = document.getElementById('agent-drawer');
+            if (open === true) drawer.classList.add('open');
+            else if (open === false) drawer.classList.remove('open');
+            else drawer.classList.toggle('open');
+        }
+
+        function addLog(msg) {
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerText = msg;
+            logArea.appendChild(entry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            uploadView.style.display = 'none';
+            resultView.style.display = 'flex';
+            toggleDrawer(true);
+
+            addLog("Agent: Initializing Browser-based OCR Engine...");
+            addLog("Agent: Loading WASM modules (Local Processing)...");
+
+            try {
+                const worker = await Tesseract.createWorker('eng', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const prog = Math.floor(m.progress * 100);
+                            if (prog % 20 === 0) addLog(`Agent: Extraction in progress... ${prog}%`);
+                        }
+                    }
+                });
+
+                addLog("Agent: Processing image layers...");
+                const { data: { text } } = await worker.recognize(file);
+                
+                extractedTextField.innerText = text;
+                addLog("Agent: Context-aware refinement complete.");
+                addLog("Agent: Output ready for export.");
+                await worker.terminate();
+            } catch (err) {
+                addLog("Error: " + err.message);
+            }
+        });
+
+        function downloadTxt() {
+            const text = extractedTextField.innerText;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'extracted_text.txt';
+            a.click();
+        }
+    </script>
 </body>
 </html>

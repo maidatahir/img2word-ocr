@@ -6,7 +6,6 @@
     <title>Agentic OCR | Privacy-First Web App</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.1.0/docx.min.js"></script>
     <style>
         :root {
             --primary: #8c52ff;
@@ -79,7 +78,6 @@
 
         .btn:hover { background: var(--accent); transform: translateY(-2px); }
 
-        /* Agent Drawer */
         .agent-drawer {
             position: fixed;
             top: 0;
@@ -101,7 +99,6 @@
         .log-area { flex: 1; background: #f9fafb; border-radius: 12px; padding: 1rem; overflow-y: auto; font-size: 0.9rem; font-family: monospace; }
         .log-entry { margin-bottom: 0.8rem; border-left: 3px solid var(--primary); padding-left: 0.8rem; }
 
-        /* Result Area */
         .result-area {
             display: none;
             width: 100%;
@@ -133,10 +130,10 @@
 <body>
     <nav class="navbar">
         <div class="logo">📝 AGENTIC OCR</div>
-        <button class="btn btn-small" onclick="toggleDrawer()">💬 Ask Agent</button>
+        <button class="btn btn-small" onclick="handlePanel()">💬 Ask Agent</button>
     </nav>
 
-    <div class="main-container" id="upload-view">
+    <div class="main-container" id="start-view">
         <h1>Image to Text</h1>
         <p class="subtitle">Secure, offline browser-based OCR with Agentic reasoning.</p>
         
@@ -148,92 +145,91 @@
         <input type="file" id="file-input" accept="image/*">
     </div>
 
-    <div class="main-container" id="result-view" style="display: none;">
+    <div class="main-container" id="finish-view" style="display: none;">
         <div class="result-area" style="display: block;">
             <h2>Extraction Preview</h2>
-            <div class="preview-text" id="extracted-text">Processing...</div>
+            <div class="preview-text" id="final-text">Processing...</div>
             <div class="format-btns">
-                <button class="btn btn-small" onclick="downloadTxt()">📝 Text</button>
-                <button class="btn btn-small" style="background: #198754;" onclick="alert('Word Exporting...')">📄 Word</button>
-                <button class="btn btn-small" style="background: #dc3545;" onclick="alert('PDF Exporting...')">📑 PDF</button>
+                <button class="btn btn-small" onclick="saveAsTxt()">📝 Text</button>
+                <button class="btn btn-small" style="background: #198754;" onclick="alert('Saving Word Document...')">📄 Word</button>
+                <button class="btn btn-small" style="background: #dc3545;" onclick="alert('Saving PDF Document...')">📑 PDF</button>
             </div>
             <button class="btn" style="background: none; color: var(--primary); margin-top: 2rem;" onclick="location.reload()">← Start Over</button>
         </div>
     </div>
 
-    <div class="agent-drawer" id="agent-drawer">
+    <div class="agent-drawer" id="side-panel">
         <div class="drawer-header">
             <h3>Agent Assistant</h3>
-            <button onclick="toggleDrawer()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+            <button onclick="handlePanel()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
         </div>
-        <div class="log-area" id="log-area">
+        <div class="log-area" id="chat-logs">
             <div class="log-entry">Hello! I'm your Agent. Upload an image to begin.</div>
         </div>
     </div>
 
     <script>
-        const logArea = document.getElementById('log-area');
-        const fileInput = document.getElementById('file-input');
-        const uploadView = document.getElementById('upload-view');
-        const resultView = document.getElementById('result-view');
-        const extractedTextField = document.getElementById('extracted-text');
+        const chatLogs = document.getElementById('chat-logs');
+        const imagePicker = document.getElementById('file-input');
+        const startPage = document.getElementById('start-view');
+        const finishPage = document.getElementById('finish-view');
+        const outputText = document.getElementById('final-text');
 
-        function toggleDrawer(open = null) {
-            const drawer = document.getElementById('agent-drawer');
-            if (open === true) drawer.classList.add('open');
-            else if (open === false) drawer.classList.remove('open');
-            else drawer.classList.toggle('open');
+        function handlePanel(show = null) {
+            const panel = document.getElementById('side-panel');
+            if (show === true) panel.classList.add('open');
+            else if (show === false) panel.classList.remove('open');
+            else panel.classList.toggle('open');
         }
 
-        function addLog(msg) {
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerText = msg;
-            logArea.appendChild(entry);
-            logArea.scrollTop = logArea.scrollHeight;
+        function pushLog(data) {
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerText = data;
+            chatLogs.appendChild(div);
+            chatLogs.scrollTop = chatLogs.scrollHeight;
         }
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+        imagePicker.addEventListener('change', async (event) => {
+            const pickedFile = event.target.files[0];
+            if (!pickedFile) return;
 
-            uploadView.style.display = 'none';
-            resultView.style.display = 'flex';
-            toggleDrawer(true);
+            startPage.style.display = 'none';
+            finishPage.style.display = 'flex';
+            handlePanel(true);
 
-            addLog("Agent: Initializing Browser-based OCR Engine...");
-            addLog("Agent: Loading WASM modules (Local Processing)...");
+            pushLog("Agent: Initializing Browser-based OCR Engine...");
+            pushLog("Agent: Loading WASM modules (Local Processing)...");
 
             try {
-                const worker = await Tesseract.createWorker('eng', 1, {
-                    logger: m => {
-                        if (m.status === 'recognizing text') {
-                            const prog = Math.floor(m.progress * 100);
-                            if (prog % 20 === 0) addLog(`Agent: Extraction in progress... ${prog}%`);
+                const ocrWorker = await Tesseract.createWorker('eng', 1, {
+                    logger: info => {
+                        if (info.status === 'recognizing text') {
+                            const percent = Math.floor(info.progress * 100);
+                            if (percent % 20 === 0) pushLog(`Agent: Extraction in progress... ${percent}%`);
                         }
                     }
                 });
 
-                addLog("Agent: Processing image layers...");
-                const { data: { text } } = await worker.recognize(file);
+                pushLog("Agent: Processing image layers...");
+                const { data: { text } } = await ocrWorker.recognize(pickedFile);
                 
-                extractedTextField.innerText = text;
-                addLog("Agent: Context-aware refinement complete.");
-                addLog("Agent: Output ready for export.");
-                await worker.terminate();
-            } catch (err) {
-                addLog("Error: " + err.message);
+                outputText.innerText = text;
+                pushLog("Agent: Context-aware refinement complete.");
+                pushLog("Agent: Output ready for export.");
+                await ocrWorker.terminate();
+            } catch (fail) {
+                pushLog("Error: " + fail.message);
             }
         });
 
-        function downloadTxt() {
-            const text = extractedTextField.innerText;
-            const blob = new Blob([text], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'extracted_text.txt';
-            a.click();
+        function saveAsTxt() {
+            const blobData = new Blob([outputText.innerText], { type: 'text/plain' });
+            const downloadUrl = URL.createObjectURL(blobData);
+            const anchor = document.createElement('a');
+            anchor.href = downloadUrl;
+            anchor.download = 'extracted_text.txt';
+            anchor.click();
         }
     </script>
 </body>

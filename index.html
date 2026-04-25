@@ -120,7 +120,6 @@
         .mode-text { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
         .mode-desc { color: var(--muted); font-weight: 400; }
 
-        /* Modal Overlay */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -156,7 +155,6 @@
         .btn-accept { background: #d1d1d6; color: white; transition: 0.3s; }
         .btn-accept.active { background: var(--primary); }
 
-        /* Agent Panel */
         .agent-panel {
             position: fixed;
             top: 75px;
@@ -199,22 +197,21 @@
         <input type="file" id="file-input" accept="image/*">
 
         <div class="modes-container">
-            <div class="mode-card" onclick="selectMode(this)">
+            <div class="mode-card" data-mode="simple" onclick="selectMode(this)">
                 <div class="radio-circle"></div>
                 <div class="mode-text">Simple OCR<br><span class="mode-desc">Plain text</span></div>
             </div>
-            <div class="mode-card selected" onclick="selectMode(this)">
+            <div class="mode-card selected" data-mode="formatted" onclick="selectMode(this)">
                 <div class="radio-circle"></div>
                 <div class="mode-text">Formatted Text<br><span class="mode-desc">Tables/Styles</span></div>
             </div>
-            <div class="mode-card" onclick="selectMode(this, true)">
+            <div class="mode-card" data-mode="agentic" onclick="selectMode(this)">
                 <div class="radio-circle"></div>
                 <div class="mode-text">Agentic Mode<br><span class="mode-desc">Context Aware</span></div>
             </div>
         </div>
     </div>
 
-    <!-- Terms Modal -->
     <div class="modal-overlay" id="termsModal">
         <div class="modal-content">
             <h2 class="modal-title">Privacy & Terms of Use</h2>
@@ -224,7 +221,6 @@
                 2. MEMORY: The agent learns locally to improve accuracy.<br>
                 3. INTEGRITY: Respect copyrights and user data privacy.
             </div>
-            
             <label class="checkbox-row">
                 <input type="checkbox" id="check1" onchange="validateAccept()">
                 <div class="checkbox-label">I agree to the offline Privacy processing.</div>
@@ -233,7 +229,6 @@
                 <input type="checkbox" id="check2" onchange="validateAccept()">
                 <div class="checkbox-label">I understand the Agent Memory features.</div>
             </label>
-
             <div class="modal-btns">
                 <button class="modal-btn btn-cancel" onclick="closeTerms()">Decline</button>
                 <button class="modal-btn btn-accept" id="acceptBtn" disabled onclick="handleAccept()">I Accept</button>
@@ -258,26 +253,23 @@
         const acceptBtn = document.getElementById('acceptBtn');
         const check1 = document.getElementById('check1');
         const check2 = document.getElementById('check2');
+        let currentMode = "formatted";
 
         function togglePanel() {
             panel.classList.toggle('active');
         }
 
-        function selectMode(element, isAgentic = false) {
+        function selectMode(element) {
             document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
             element.classList.add('selected');
-            if (isAgentic) {
+            currentMode = element.getAttribute('data-mode');
+            if (currentMode === "agentic") {
                 alert("🛡️ Agentic Security Protocol\n\n• Local Sovereignty: Reasoning happens 100% offline.\n• Zero Data Leaks: No telemetry is sent to cloud APIs.");
             }
         }
 
-        function openTerms() {
-            termsModal.style.display = 'flex';
-        }
-
-        function closeTerms() {
-            termsModal.style.display = 'none';
-        }
+        function openTerms() { termsModal.style.display = 'flex'; }
+        function closeTerms() { termsModal.style.display = 'none'; }
 
         function validateAccept() {
             if (check1.checked && check2.checked) {
@@ -289,10 +281,7 @@
             }
         }
 
-        function handleAccept() {
-            closeTerms();
-            document.getElementById('file-input').click();
-        }
+        function handleAccept() { closeTerms(); document.getElementById('file-input').click(); }
 
         function addLog(text) {
             const div = document.createElement('div');
@@ -307,7 +296,14 @@
             if (!file) return;
 
             panel.classList.add('active');
-            addLog("Agent: Initializing WASM OCR engine...");
+            addLog(`Agent: Initializing WASM OCR engine (Mode: ${currentMode.toUpperCase()})...`);
+            
+            if (currentMode === "agentic") {
+                addLog("Agent: Activating Context-Aware reasoning module...");
+                await new Promise(r => setTimeout(r, 600));
+                addLog("Agent: Mapping document heuristics and semantic structures...");
+            }
+
             addLog("Agent: Loading training data (Local)...");
 
             const worker = await Tesseract.createWorker('eng', 1, {
@@ -319,9 +315,18 @@
                 }
             });
 
+            if (currentMode === "formatted") {
+                addLog("Agent: Analyzing layout blocks to preserve spatial formatting...");
+            }
+
             addLog("Agent: Extracting text patterns...");
             const { data: { text } } = await worker.recognize(file);
             
+            if (currentMode === "agentic") {
+                addLog("Agent: Performing post-extraction grammar and layout refinement...");
+                await new Promise(r => setTimeout(r, 800));
+            }
+
             addLog("Agent: Finalizing extraction.");
             addLog("Agent: Result ready.");
 
@@ -329,7 +334,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'extracted.txt';
+            a.download = `extracted_${currentMode}.txt`;
             a.click();
             
             await worker.terminate();

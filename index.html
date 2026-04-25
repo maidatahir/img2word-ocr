@@ -3,234 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agentic OCR | Privacy-First Web App</title>
+    <title>Image To Text Converter</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --primary: #8c52ff;
             --accent: #4f46e5;
-            --bg: #f8f9fa;
+            --bg: #f2f1d9;
             --card: #ffffff;
             --text: #212529;
             --muted: #6c757d;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica', 'Arial', sans-serif; }
 
         body {
-            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            background-color: var(--bg);
             min-height: 100vh;
             color: var(--text);
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
         }
 
         .navbar {
-            padding: 1rem 5%;
+            height: 65px;
+            padding: 0 40px;
             background: var(--card);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        .logo { font-weight: 800; font-size: 1.2rem; color: var(--accent); }
+        .brand { font-weight: 700; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .ask-agent { color: var(--primary); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
 
-        .main-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem 5%;
+        .hero {
+            padding: 60px 0 30px 0;
             text-align: center;
         }
 
-        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: 800; }
-        .subtitle { color: var(--muted); margin-bottom: 2rem; }
+        .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; color: #1a1a1a; }
+        .hero p { color: var(--muted); font-size: 1.1rem; }
 
-        .upload-box {
+        .main-card {
             background: var(--card);
-            width: 100%;
-            max-width: 600px;
-            padding: 3rem;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            border: 2px dashed #e5e7eb;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            width: 90%;
+            max-width: 950px;
+            margin: 20px auto;
+            border-radius: 20px;
+            padding: 60px 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .upload-box:hover { border-color: var(--primary); background: #fdfbff; }
+        .upload-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+        .upload-subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 35px; }
 
-        .btn {
+        .browse-btn {
             background: var(--primary);
             color: white;
-            padding: 1rem 2rem;
-            border-radius: 12px;
+            padding: 14px 45px;
+            border-radius: 8px;
             font-weight: 700;
             border: none;
             cursor: pointer;
-            transition: 0.3s;
+            font-size: 1.1rem;
+            margin-bottom: 45px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .btn:hover { background: var(--accent); transform: translateY(-2px); }
-
-        .agent-drawer {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
-            background: var(--card);
-            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .modes-container {
             display: flex;
-            flex-direction: column;
-            padding: 2rem;
-            z-index: 1000;
+            justify-content: center;
+            gap: 15px;
         }
 
-        .agent-drawer.open { right: 0; }
-
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .log-area { flex: 1; background: #f9fafb; border-radius: 12px; padding: 1rem; overflow-y: auto; font-size: 0.9rem; font-family: monospace; }
-        .log-entry { margin-bottom: 0.8rem; border-left: 3px solid var(--primary); padding-left: 0.8rem; }
-
-        .result-area {
-            display: none;
-            width: 100%;
-            max-width: 800px;
-            background: var(--card);
-            padding: 2rem;
-            border-radius: 24px;
-            margin-top: 2rem;
-            text-align: left;
-        }
-
-        .preview-text {
-            width: 100%;
-            height: 300px;
+        .mode-card {
+            flex: 1;
+            max-width: 180px;
+            background: white;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
-            padding: 1rem;
-            margin-top: 1rem;
-            white-space: pre-wrap;
-            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            cursor: pointer;
+            transition: 0.2s;
         }
 
-        .format-btns { display: flex; gap: 10px; margin-top: 1.5rem; }
-        .btn-small { padding: 0.6rem 1.2rem; font-size: 0.85rem; }
+        .mode-card.selected { border-color: var(--primary); border-width: 2px; }
+
+        .radio-circle {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #9ca3af;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mode-card.selected .radio-circle { border-color: var(--primary); }
+        .mode-card.selected .radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+        .mode-text { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
+        .mode-desc { color: var(--muted); font-weight: 400; }
+
+        .agent-panel {
+            position: fixed;
+            top: 75px;
+            right: -32%;
+            width: 30%;
+            height: 85vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: -5px 5px 20px rgba(0,0,0,0.1);
+            transition: right 0.4s ease;
+            z-index: 1000;
+            padding: 25px;
+            border: 1px solid #dee2e6;
+        }
+
+        .agent-panel.active { right: 20px; }
 
         #file-input { display: none; }
+
+        .log-box { background: #f8f9fa; border-radius: 10px; height: 80%; overflow-y: auto; padding: 15px; font-size: 0.9rem; border: 1px solid #dee2e6; margin-top: 15px; }
+        .log { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--primary); }
     </style>
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo">📝 AGENTIC OCR</div>
-        <button class="btn btn-small" onclick="handlePanel()">💬 Ask Agent</button>
+        <div class="brand">📄 Image To Text</div>
+        <div class="ask-agent" onclick="togglePanel()">💬 Ask Agent</div>
     </nav>
 
-    <div class="main-container" id="start-view">
-        <h1>Image to Text</h1>
-        <p class="subtitle">Secure, offline browser-based OCR with Agentic reasoning.</p>
+    <div class="hero">
+        <h1>Image to Text Converter</h1>
+        <p>An offline image to text converter to extract text from images.</p>
+    </div>
+
+    <div class="main-card">
+        <h2 class="upload-title">Drop, Upload or Paste Images</h2>
+        <p class="upload-subtitle">Supported formats: JPG, PNG, GIF, JFIF, HEIC, PDF</p>
         
-        <div class="upload-box" onclick="document.getElementById('file-input').click()">
-            <div style="font-size: 3rem; margin-bottom: 1rem;">🖼️</div>
-            <h3>Click to Upload Image</h3>
-            <p style="color: var(--muted); margin-top: 0.5rem;">JPG, PNG, PDF supported</p>
-        </div>
+        <button class="browse-btn" onclick="document.getElementById('file-input').click()">
+            <span>↑</span> Browse
+        </button>
         <input type="file" id="file-input" accept="image/*">
-    </div>
 
-    <div class="main-container" id="finish-view" style="display: none;">
-        <div class="result-area" style="display: block;">
-            <h2>Extraction Preview</h2>
-            <div class="preview-text" id="final-text">Processing...</div>
-            <div class="format-btns">
-                <button class="btn btn-small" onclick="saveAsTxt()">📝 Text</button>
-                <button class="btn btn-small" style="background: #198754;" onclick="alert('Saving Word Document...')">📄 Word</button>
-                <button class="btn btn-small" style="background: #dc3545;" onclick="alert('Saving PDF Document...')">📑 PDF</button>
+        <div class="modes-container">
+            <div class="mode-card" onclick="selectMode(this)">
+                <div class="radio-circle"></div>
+                <div class="mode-text">Simple OCR<br><span class="mode-desc">Plain text</span></div>
             </div>
-            <button class="btn" style="background: none; color: var(--primary); margin-top: 2rem;" onclick="location.reload()">← Start Over</button>
+            <div class="mode-card selected" onclick="selectMode(this)">
+                <div class="radio-circle"></div>
+                <div class="mode-text">Formatted Text<br><span class="mode-desc">Tables/Styles</span></div>
+            </div>
+            <div class="mode-card" onclick="selectMode(this)">
+                <div class="radio-circle"></div>
+                <div class="mode-text">Agentic Mode<br><span class="mode-desc">Context Aware</span></div>
+            </div>
         </div>
     </div>
 
-    <div class="agent-drawer" id="side-panel">
-        <div class="drawer-header">
-            <h3>Agent Assistant</h3>
-            <button onclick="handlePanel()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+    <div class="agent-panel" id="agentPanel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="color: var(--primary);">Agent Assistant</h3>
+            <span onclick="togglePanel()" style="cursor: pointer; font-size: 1.2rem;">✕</span>
         </div>
-        <div class="log-area" id="chat-logs">
-            <div class="log-entry">Hello! I'm your Agent. Upload an image to begin.</div>
+        <div class="log-box" id="logBox">
+            <div class="log">Ready to process. Upload an image to begin.</div>
         </div>
     </div>
 
     <script>
-        const chatLogs = document.getElementById('chat-logs');
-        const imagePicker = document.getElementById('file-input');
-        const startPage = document.getElementById('start-view');
-        const finishPage = document.getElementById('finish-view');
-        const outputText = document.getElementById('final-text');
+        const panel = document.getElementById('agentPanel');
+        const logs = document.getElementById('logBox');
 
-        function handlePanel(show = null) {
-            const panel = document.getElementById('side-panel');
-            if (show === true) panel.classList.add('open');
-            else if (show === false) panel.classList.remove('open');
-            else panel.classList.toggle('open');
+        function togglePanel() {
+            panel.classList.toggle('active');
         }
 
-        function pushLog(data) {
+        function selectMode(element) {
+            document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function addLog(text) {
             const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.innerText = data;
-            chatLogs.appendChild(div);
-            chatLogs.scrollTop = chatLogs.scrollHeight;
+            div.className = 'log';
+            div.innerText = text;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
         }
 
-        imagePicker.addEventListener('change', async (event) => {
-            const pickedFile = event.target.files[0];
-            if (!pickedFile) return;
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-            startPage.style.display = 'none';
-            finishPage.style.display = 'flex';
-            handlePanel(true);
+            panel.classList.add('active');
+            addLog("Agent: Initializing WASM OCR engine...");
+            addLog("Agent: Loading training data (Local)...");
 
-            pushLog("Agent: Initializing Browser-based OCR Engine...");
-            pushLog("Agent: Loading WASM modules (Local Processing)...");
-
-            try {
-                const ocrWorker = await Tesseract.createWorker('eng', 1, {
-                    logger: info => {
-                        if (info.status === 'recognizing text') {
-                            const percent = Math.floor(info.progress * 100);
-                            if (percent % 20 === 0) pushLog(`Agent: Extraction in progress... ${percent}%`);
-                        }
+            const worker = await Tesseract.createWorker('eng', 1, {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                        const p = Math.floor(m.progress * 100);
+                        if (p % 25 === 0) addLog(`Agent: Processing... ${p}%`);
                     }
-                });
+                }
+            });
 
-                pushLog("Agent: Processing image layers...");
-                const { data: { text } } = await ocrWorker.recognize(pickedFile);
-                
-                outputText.innerText = text;
-                pushLog("Agent: Context-aware refinement complete.");
-                pushLog("Agent: Output ready for export.");
-                await ocrWorker.terminate();
-            } catch (fail) {
-                pushLog("Error: " + fail.message);
-            }
+            addLog("Agent: Extracting text patterns...");
+            const { data: { text } } = await worker.recognize(file);
+            
+            addLog("Agent: Finalizing extraction.");
+            addLog("Agent: Result ready.");
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'extracted.txt';
+            a.click();
+            
+            await worker.terminate();
         });
-
-        function saveAsTxt() {
-            const blobData = new Blob([outputText.innerText], { type: 'text/plain' });
-            const downloadUrl = URL.createObjectURL(blobData);
-            const anchor = document.createElement('a');
-            anchor.href = downloadUrl;
-            anchor.download = 'extracted_text.txt';
-            anchor.click();
-        }
     </script>
 </body>
 </html>

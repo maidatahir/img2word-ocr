@@ -253,11 +253,11 @@ class ImageToWordApp(ctk.CTk):
         btnFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
         btnFrame.pack(pady=10)
         ctk.CTkButton(btnFrame, text="↑ Browse", command=self.browseImage, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), height=50, width=160, corner_radius=8).pack(side="left", padx=5)
-        self.ocrModeVar = ctk.StringVar(value="formatted")
+        self.ocrModeVar = ctk.StringVar(value="simple")
         self.ocrModeVar.trace_add("write", self.onModeChanged)
         radioFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
         radioFrame.pack(pady=30)
-        for modeVal, modeText in [("simple", "Simple OCR\nPlain text"), ("formatted", "Formatted Text\nTables/Styles"), ("agentic", "Agentic Mode\nContext Aware")]:
+        for modeVal, modeText in [("simple", "Simple OCR\nPlain text"), ("agentic", "Agentic Mode\nContext Aware")]:
             cardFrame = ctk.CTkFrame(radioFrame, fg_color="transparent", border_width=1, border_color="#e5e7eb", corner_radius=8)
             cardFrame.pack(side="left", padx=10, ipadx=10, ipady=5)
             ctk.CTkRadioButton(cardFrame, text=modeText, variable=self.ocrModeVar, value=modeVal, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), fg_color=accentColor).pack(pady=10, padx=10)

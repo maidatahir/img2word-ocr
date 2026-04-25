@@ -120,6 +120,43 @@
         .mode-text { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
         .mode-desc { color: var(--muted); font-weight: 400; }
 
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 500px;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: left;
+        }
+
+        .modal-title { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; text-align: center; }
+        .modal-body { font-size: 0.95rem; line-height: 1.6; margin-bottom: 25px; color: var(--text); }
+        
+        .checkbox-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; cursor: pointer; }
+        .checkbox-row input { margin-top: 4px; width: 18px; height: 18px; cursor: pointer; }
+        .checkbox-label { font-weight: 600; font-size: 0.9rem; }
+
+        .modal-btns { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
+        .modal-btn { padding: 12px 25px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; }
+        .btn-cancel { background: none; color: #dc3545; }
+        .btn-accept { background: #d1d1d6; color: white; transition: 0.3s; }
+        .btn-accept.active { background: var(--primary); }
+
+        /* Agent Panel */
         .agent-panel {
             position: fixed;
             top: 75px;
@@ -136,9 +173,7 @@
         }
 
         .agent-panel.active { right: 20px; }
-
         #file-input { display: none; }
-
         .log-box { background: #f8f9fa; border-radius: 10px; height: 80%; overflow-y: auto; padding: 15px; font-size: 0.9rem; border: 1px solid #dee2e6; margin-top: 15px; }
         .log { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--primary); }
     </style>
@@ -158,7 +193,7 @@
         <h2 class="upload-title">Drop, Upload or Paste Images</h2>
         <p class="upload-subtitle">Supported formats: JPG, PNG, GIF, JFIF, HEIC, PDF</p>
         
-        <button class="browse-btn" onclick="document.getElementById('file-input').click()">
+        <button class="browse-btn" onclick="openTerms()">
             <span>↑</span> Browse
         </button>
         <input type="file" id="file-input" accept="image/*">
@@ -172,9 +207,36 @@
                 <div class="radio-circle"></div>
                 <div class="mode-text">Formatted Text<br><span class="mode-desc">Tables/Styles</span></div>
             </div>
-            <div class="mode-card" onclick="selectMode(this)">
+            <div class="mode-card" onclick="selectMode(this, true)">
                 <div class="radio-circle"></div>
                 <div class="mode-text">Agentic Mode<br><span class="mode-desc">Context Aware</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Privacy & Terms of Use</h2>
+            <div class="modal-body">
+                By using this Agentic System, you agree to the following:<br><br>
+                1. PRIVACY: Your data remains yours. Processing is entirely offline.<br>
+                2. MEMORY: The agent learns locally to improve accuracy.<br>
+                3. INTEGRITY: Respect copyrights and user data privacy.
+            </div>
+            
+            <label class="checkbox-row">
+                <input type="checkbox" id="check1" onchange="validateAccept()">
+                <div class="checkbox-label">I agree to the offline Privacy processing.</div>
+            </label>
+            <label class="checkbox-row">
+                <input type="checkbox" id="check2" onchange="validateAccept()">
+                <div class="checkbox-label">I understand the Agent Memory features.</div>
+            </label>
+
+            <div class="modal-btns">
+                <button class="modal-btn btn-cancel" onclick="closeTerms()">Decline</button>
+                <button class="modal-btn btn-accept" id="acceptBtn" disabled onclick="handleAccept()">I Accept</button>
             </div>
         </div>
     </div>
@@ -192,14 +254,44 @@
     <script>
         const panel = document.getElementById('agentPanel');
         const logs = document.getElementById('logBox');
+        const termsModal = document.getElementById('termsModal');
+        const acceptBtn = document.getElementById('acceptBtn');
+        const check1 = document.getElementById('check1');
+        const check2 = document.getElementById('check2');
 
         function togglePanel() {
             panel.classList.toggle('active');
         }
 
-        function selectMode(element) {
+        function selectMode(element, isAgentic = false) {
             document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
             element.classList.add('selected');
+            if (isAgentic) {
+                alert("🛡️ Agentic Security Protocol\n\n• Local Sovereignty: Reasoning happens 100% offline.\n• Zero Data Leaks: No telemetry is sent to cloud APIs.");
+            }
+        }
+
+        function openTerms() {
+            termsModal.style.display = 'flex';
+        }
+
+        function closeTerms() {
+            termsModal.style.display = 'none';
+        }
+
+        function validateAccept() {
+            if (check1.checked && check2.checked) {
+                acceptBtn.disabled = false;
+                acceptBtn.classList.add('active');
+            } else {
+                acceptBtn.disabled = true;
+                acceptBtn.classList.remove('active');
+            }
+        }
+
+        function handleAccept() {
+            closeTerms();
+            document.getElementById('file-input').click();
         }
 
         function addLog(text) {

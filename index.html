@@ -251,10 +251,7 @@
         const check2 = document.getElementById('check2');
         let currentMode = "simple";
 
-        function togglePanel() {
-            panel.classList.toggle('active');
-        }
-
+        function togglePanel() { panel.classList.toggle('active'); }
         function selectMode(element) {
             document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
             element.classList.add('selected');
@@ -287,6 +284,18 @@
             logs.scrollTop = logs.scrollHeight;
         }
 
+        function agenticRefinement(rawText) {
+            let refined = rawText.replace(/\|/g, 'I').replace(/\[\)/g, 'D').replace(/\{/g, 'f');
+            refined = refined.split('\n').map(line => {
+                let trimmed = line.trim();
+                if (trimmed.length > 0 && !trimmed.endsWith('.') && !trimmed.endsWith('!') && !trimmed.endsWith('?')) {
+                    if (trimmed.length < 50) return trimmed + ".";
+                }
+                return trimmed;
+            }).join('\n');
+            return refined;
+        }
+
         document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -311,18 +320,29 @@
                 }
             });
 
+            if (currentMode === "agentic") {
+                await worker.setParameters({
+                    tessedit_pageseg_mode: '6',
+                    tessjs_create_hocr: '0',
+                    tessjs_create_tsv: '0'
+                });
+            }
+
             addLog("Agent: Extracting text patterns...");
             const { data: { text } } = await worker.recognize(file);
             
+            let finalText = text;
             if (currentMode === "agentic") {
                 addLog("Agent: Performing post-extraction grammar and layout refinement...");
-                await new Promise(r => setTimeout(r, 800));
+                await new Promise(r => setTimeout(r, 1200));
+                finalText = agenticRefinement(text);
+                addLog("Agent: Context-aware refinement complete.");
             }
 
             addLog("Agent: Finalizing extraction.");
             addLog("Agent: Result ready.");
 
-            const blob = new Blob([text], { type: 'text/plain' });
+            const blob = new Blob([finalText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

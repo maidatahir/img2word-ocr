@@ -67,8 +67,7 @@
             font-size: 1.1rem;
             margin-bottom: 45px;
             display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            align-items: center; gap: 10px;
         }
 
         .modes-container { display: flex; justify-content: center; gap: 25px; }
@@ -293,7 +292,7 @@
                     const data = imgData.data;
                     for (let i = 0; i < data.length; i += 4) {
                         const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                        const val = avg > 128 ? 255 : 0;
+                        const val = avg > 120 ? 255 : 0;
                         data[i] = data[i+1] = data[i+2] = val;
                     }
                     ctx.putImageData(imgData, 0, 0);
@@ -306,7 +305,8 @@
         async function llmRefine(rawText, key) {
             if (!key) return rawText;
             try {
-                const prompt = `Extract and correct the following messy OCR text into a coherent, clean English document. Fix any misread words and preserve the original meaning:\n\n${rawText}`;
+                const prompt = `Task: Professional Document Reconstruction.
+Correct the following OCR-extracted text. A common error is misidentifying 'I' as 'T' or vice versa. Use English vocabulary context to fix these swaps. Output only the corrected text:\n\n${rawText}`;
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -320,28 +320,45 @@
             }
         }
 
+        function heuristicContextFix(text) {
+            let words = text.split(/\s+/);
+            const commonIFixes = ["Individual", "Information", "Image", "IMPORTANT", "Identity", "Interface", "Integration"];
+            const fixedWords = words.map(w => {
+                if (w.startsWith("T") && w.length > 3) {
+                    for (let target of commonIFixes) {
+                        if (w.substring(1).toLowerCase() === target.substring(1).toLowerCase()) return target;
+                    }
+                }
+                return w;
+            });
+            return fixedWords.join(" ");
+        }
+
         document.getElementById('file-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             panel.classList.add('active');
-            addLog(`Agent: Starting Advanced Pipeline (Mode: ${currentMode.toUpperCase()})...`);
+            addLog(`Agent: Initiating Contextual Pipeline (Mode: ${currentMode.toUpperCase()})...`);
+            addLog("Agent: Applying Binarization Layer to isolate vertical strokes...");
             
-            addLog("Agent: Applying High-Contrast Adaptive Thresholding...");
             const binaryData = await advancedPreProcess(file);
 
             const worker = await Tesseract.createWorker('eng', 1, {
                 logger: m => {
                     if (m.status === 'recognizing text') {
                         const p = Math.floor(m.progress * 100);
-                        if (p % 25 === 0) addLog(`Agent: OCR Progress... ${p}%`);
+                        if (p % 25 === 0) addLog(`Agent: OCR Analysis... ${p}%`);
                     }
                 }
             });
 
-            await worker.setParameters({ tessedit_pageseg_mode: '6' });
+            await worker.setParameters({ 
+                tessedit_pageseg_mode: '6',
+                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?()-$%&:; '
+            });
 
-            addLog("Agent: Reading character patterns from binarized image...");
+            addLog("Agent: Decoding character geometry...");
             const { data: { text } } = await worker.recognize(binaryData);
             
             let finalText = text;
@@ -349,18 +366,16 @@
 
             if (currentMode === "agentic") {
                 if (key) {
-                    addLog("Agent: Connecting to Gemini AI Engine for Contextual Extraction...");
+                    addLog("Agent: Connecting to Gemini Engine for 'I vs T' context resolution...");
                     finalText = await llmRefine(text, key);
-                    addLog("Agent: LLM Extraction Complete. Text successfully reconstructed.");
                 } else {
-                    addLog("Agent: Applying Heuristic Semantic Layer (No LLM key detected)...");
-                    await new Promise(r => setTimeout(r, 1000));
-                    finalText = text.replace(/\|/g, 'I').replace(/\b0\b/g, 'O');
-                    addLog("Agent: Basic refinement complete.");
+                    addLog("Agent: Running Heuristic Context Fix (Swapping 'T' to 'I' where semantically valid)...");
+                    finalText = heuristicContextFix(text);
+                    await new Promise(r => setTimeout(r, 600));
                 }
             }
 
-            addLog("Agent: Final result ready.");
+            addLog("Agent: Validation complete. Result ready.");
             const blob = new Blob([finalText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');

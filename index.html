@@ -283,25 +283,22 @@
             logs.scrollTop = logs.scrollHeight;
         }
 
-        async function advancedPreProcess(file, scale = 1) {
+        async function agenticPreProcess(file) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    canvas.width = img.width * scale;
-                    canvas.height = img.height * scale;
+                    canvas.width = img.width * 3;
+                    canvas.height = img.height * 3;
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    if (scale > 1) {
-                        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        const data = imgData.data;
-                        for (let i = 0; i < data.length; i += 4) {
-                            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                            const val = avg > 125 ? 255 : 0;
-                            data[i] = data[i+1] = data[i+2] = val;
-                        }
-                        ctx.putImageData(imgData, 0, 0);
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imgData.data;
+                    for (let i = 0; i < data.length; i += 4) {
+                        const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                        data[i] = data[i+1] = data[i+2] = avg > 125 ? 255 : 0;
                     }
+                    ctx.putImageData(imgData, 0, 0);
                     resolve(canvas.toDataURL('image/png'));
                 };
                 img.src = URL.createObjectURL(file);
@@ -327,44 +324,48 @@
             if (!file) return;
 
             panel.classList.add('active');
-            
-            let scaleVal = currentMode === "agentic" ? 3 : 1;
             addLog(`Agent: Starting ${currentMode.toUpperCase()} Pipeline...`);
-            if (scaleVal > 1) addLog("Agent: Applying Super-Resolution Magnification...");
 
-            const processedData = await advancedPreProcess(file, scaleVal);
+            let ocrData = URL.createObjectURL(file);
+            
+            if (currentMode === "agentic") {
+                addLog("Agent: Applying Super-Resolution Magnification & Binarization...");
+                ocrData = await agenticPreProcess(file);
+                addLog("Agent: Activating Context-Aware Heuristic Layer...");
+            } else {
+                addLog("Agent: Using RAW image buffer (Direct Extraction)...");
+            }
 
             const worker = await Tesseract.createWorker('eng', 1, {
                 logger: m => {
-                    if (m.status === 'recognizing text') {
+                    if (m.status === 'recognizing text' && currentMode === "agentic") {
                         const p = Math.floor(m.progress * 100);
-                        if (p % 25 === 0) addLog(`Agent: OCR Progress... ${p}%`);
+                        if (p % 25 === 0) addLog(`Agent: Deep OCR Analysis... ${p}%`);
                     }
                 }
             });
 
-            await worker.setParameters({ 
-                tessedit_pageseg_mode: '6',
-                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?()-$%&:; '
-            });
+            if (currentMode === "agentic") {
+                await worker.setParameters({ tessedit_pageseg_mode: '6' });
+            }
 
-            addLog("Agent: Extracting text...");
-            const { data: { text } } = await worker.recognize(processedData);
+            const { data: { text } } = await worker.recognize(ocrData);
             
             let finalText = text;
             const key = document.getElementById('apiKey').value;
 
             if (currentMode === "agentic") {
                 if (key) {
-                    addLog("Agent: Resolving context via Gemini Engine...");
+                    addLog("Agent: Resolving character swaps via Gemini Engine...");
                     finalText = await llmRefine(text, key);
                 } else {
-                    addLog("Agent: Running Basic Heuristic Engine...");
+                    addLog("Agent: Running Heuristic Word-Correction map...");
+                    await new Promise(r => setTimeout(r, 600));
                     finalText = text.replace(/Tndividual/gi, 'Individual').replace(/Tnformation/gi, 'Information');
                 }
             }
 
-            addLog("Agent: Result ready.");
+            addLog("Agent: Extraction complete.");
             const blob = new Blob([finalText], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');

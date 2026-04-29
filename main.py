@@ -384,6 +384,13 @@ class ImageToWordApp(ctk.CTk):
             resData = runOcr(self.imagePath, localMode=True)
             self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(resData.get('paragraphs', []))} text blocks..."))
             
+            if activeMode == "agentic" and self.llmClient.isActive():
+                self.after(500, lambda: self.addLog("Agentic Refinement: Connecting to Gemini for semantic correction..."))
+                rawText = resData.get("rawText", "")
+                refinedText = self.llmClient.refineOcrText(rawText)
+                resData["rawText"] = refinedText
+                self.after(1000, lambda: self.addLog("Refinement complete. Corrected typos and improved structure."))
+
             if self.maskSensitiveVar.get():
                 self.after(200, lambda: self.addLog("Security: Redacting sensitive information (Emails/CNIC)..."))
                 resData["rawText"] = maskSensitiveInfo(resData.get("rawText", ""))
@@ -391,13 +398,6 @@ class ImageToWordApp(ctk.CTk):
                     p["text"] = maskSensitiveInfo(p.get("text", ""))
                     for r in p.get("runs", []):
                         r["text"] = maskSensitiveInfo(r.get("text", ""))
-
-            if activeMode == "agentic" and self.llmClient.isActive():
-                self.after(500, lambda: self.addLog("Agentic Refinement: Connecting to Gemini for semantic correction..."))
-                rawText = resData.get("rawText", "")
-                refinedText = self.llmClient.refineOcrText(rawText)
-                resData["rawText"] = refinedText
-                self.after(1000, lambda: self.addLog("Refinement complete. Corrected typos and improved structure."))
             self.after(2500, lambda: self.after(0, self.onSuccess, resData))
         except Exception as e: self.after(0, self.onError, str(e))
     def onSuccess(self, resData):

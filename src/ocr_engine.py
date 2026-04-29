@@ -92,7 +92,7 @@ def isBoldWord(word: str, conf: int) -> bool:
 
 
 def maskSensitiveInfo(text: str) -> str:
-    emailPattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
+    emailPattern = r'[a-zA-Z0-9_.+-]+\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
     cnicPattern  = r'\d{5}-\d{7}-\d{1}'
     
     maskedText = re.sub(emailPattern, "[EMAIL MASKED]", text)

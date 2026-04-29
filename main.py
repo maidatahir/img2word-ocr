@@ -10,7 +10,7 @@ import customtkinter as ctk
 baseDir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, baseDir)
 
-from src.ocr_engine       import runOcr
+from src.ocr_engine       import runOcr, maskSensitiveInfo
 from src.document_builder import buildDocx, buildPdf, buildTxt
 from src.llm_client      import GeminiClient
 
@@ -295,12 +295,14 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkButton(btnFrame, text="↑ Browse", command=self.browseImage, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), height=50, width=160, corner_radius=8).pack(side="left", padx=5)
         self.ocrModeVar = ctk.StringVar(value="simple")
         self.ocrModeVar.trace_add("write", self.onModeChanged)
+        self.maskSensitiveVar = ctk.BooleanVar(value=False)
         radioFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
         radioFrame.pack(pady=30)
         for modeVal, modeText in [("simple", "Simple OCR\nPlain text"), ("agentic", "Agentic Mode\nContext Aware")]:
             cardFrame = ctk.CTkFrame(radioFrame, fg_color="transparent", border_width=1, border_color="#e5e7eb", corner_radius=8)
             cardFrame.pack(side="left", padx=10, ipadx=10, ipady=5)
             ctk.CTkRadioButton(cardFrame, text=modeText, variable=self.ocrModeVar, value=modeVal, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), fg_color=accentColor).pack(pady=10, padx=10)
+        ctk.CTkCheckBox(innerFrame, text="🔒 Mask Sensitive Info (Emails, CNIC)", variable=self.maskSensitiveVar, font=ctk.CTkFont(family=fontFamily, size=13, weight="bold"), text_color=textPrimary, fg_color=accentColor).pack(pady=(0, 20))
         ctk.CTkLabel(self.uploadFrame, text="*Your privacy is protected! No data is transmitted.", font=ctk.CTkFont(family=fontFamily, size=12, slant="italic"), text_color=textMuted).pack(side="bottom", pady=20, anchor="w", padx=30)
 
     def buildPreviewBox(self):
@@ -381,6 +383,15 @@ class ImageToWordApp(ctk.CTk):
             self.after(1800, lambda: self.addLog("Step 2: Tesseract OCR Engine analysis..."))
             resData = runOcr(self.imagePath, localMode=True)
             self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(resData.get('paragraphs', []))} text blocks..."))
+            
+            if self.maskSensitiveVar.get():
+                self.after(200, lambda: self.addLog("Security: Redacting sensitive information (Emails/CNIC)..."))
+                resData["rawText"] = maskSensitiveInfo(resData.get("rawText", ""))
+                for p in resData.get("paragraphs", []):
+                    p["text"] = maskSensitiveInfo(p.get("text", ""))
+                    for r in p.get("runs", []):
+                        r["text"] = maskSensitiveInfo(r.get("text", ""))
+
             if activeMode == "agentic" and self.llmClient.isActive():
                 self.after(500, lambda: self.addLog("Agentic Refinement: Connecting to Gemini for semantic correction..."))
                 rawText = resData.get("rawText", "")

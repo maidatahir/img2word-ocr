@@ -7,3 +7,4 @@ lxml>=4.9.0
 numpy>=1.24.0
 customtkinter>=5.2.0
 pywinstyles>=1.6.0
+google-generativeai>=0.3.0

@@ -12,6 +12,7 @@ sys.path.insert(0, baseDir)
 
 from src.ocr_engine       import runOcr
 from src.document_builder import buildDocx, buildPdf, buildTxt
+from src.llm_client      import GeminiClient
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -48,6 +49,8 @@ class ImageToWordApp(ctk.CTk):
         self.chatPanelWidthRel = 0.32
 
         self.userMemory = self.loadMemory()
+        self.settings = self.loadSettings()
+        self.llmClient = GeminiClient(self.settings.get("gemini_api_key"))
 
         self.buildUi()
         self.checkTesseract()
@@ -64,6 +67,17 @@ class ImageToWordApp(ctk.CTk):
                 with open(memoryPath, "r") as f: return json.load(f)
             except: return {}
         return {}
+
+    def loadSettings(self):
+        if os.path.exists(settingsPath):
+            try:
+                with open(settingsPath, "r") as f: return json.load(f)
+            except: return {}
+        return {}
+
+    def saveSettings(self):
+        with open(settingsPath, "w", encoding="utf-8") as f:
+            json.dump(self.settings, f)
 
     def saveMemory(self):
         with open(memoryPath, "w") as f: json.dump(self.userMemory, f)
@@ -120,6 +134,27 @@ class ImageToWordApp(ctk.CTk):
         acceptBtn.pack(side="right", padx=15)
         self.wait_window(modalWindow)
 
+    def showSettingsModal(self):
+        settingsWindow = ctk.CTkToplevel(self)
+        settingsWindow.title("System Settings")
+        settingsWindow.geometry("500x350")
+        settingsWindow.configure(fg_color=bgTint)
+        settingsWindow.attributes("-topmost", True)
+        settingsWindow.grab_set()
+        ctk.CTkLabel(settingsWindow, text="⚙️ Application Settings", font=ctk.CTkFont(family=fontFamily, size=20, weight="bold"), text_color=textPrimary).pack(pady=(30, 20))
+        ctk.CTkLabel(settingsWindow, text="Gemini API Key:", font=ctk.CTkFont(size=13, weight="bold"), text_color=textPrimary).pack(anchor="w", padx=50)
+        keyEntry = ctk.CTkEntry(settingsWindow, placeholder_text="Enter your API key here...", width=400, height=40, show="*")
+        keyEntry.insert(0, self.settings.get("gemini_api_key", ""))
+        keyEntry.pack(pady=(5, 20), padx=50)
+        def saveApiKey():
+            newKey = keyEntry.get().strip()
+            self.settings["gemini_api_key"] = newKey
+            self.saveSettings()
+            self.llmClient = GeminiClient(newKey)
+            messagebox.showinfo("Success", "Settings saved successfully!")
+            settingsWindow.destroy()
+        ctk.CTkButton(settingsWindow, text="Save Settings", command=saveApiKey, fg_color=accentColor, hover_color=accentHover, height=45, width=200, corner_radius=8).pack(pady=20)
+
     def showSecurityGuidelines(self):
         securityWindow = ctk.CTkToplevel(self)
         securityWindow.title("Agentic Security Protocol")
@@ -152,6 +187,7 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(leftNav, text="📝 Image To Text", font=ctk.CTkFont(family=fontFamily, size=16, weight="bold"), text_color="#4f46e5").pack(side="left")
         rightNav = ctk.CTkFrame(self.navFrame, fg_color="transparent")
         rightNav.pack(side="right", padx=20)
+        ctk.CTkButton(rightNav, text="⚙️ Settings", command=self.showSettingsModal, fg_color="transparent", text_color=textMuted, font=ctk.CTkFont(family=fontFamily, size=14), hover_color="#f3f4f6", width=100).pack(side="left", padx=5)
         ctk.CTkButton(rightNav, text="💬 Ask Agent", command=self.toggleChatPanel, fg_color="transparent", text_color="#4f46e5", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), hover_color="#f3f4f6", width=100).pack(side="left")
 
         self.mainLayoutFrame = ctk.CTkFrame(self, fg_color="transparent")
@@ -182,7 +218,6 @@ class ImageToWordApp(ctk.CTk):
         self.queryInput.pack(side="left", fill="x", expand=True, padx=(0, 10))
         self.queryInput.bind("<Return>", lambda e: self.processQuery())
         ctk.CTkButton(inputFrame, text="Send", width=60, height=40, corner_radius=8, fg_color=accentColor, hover_color=accentHover, text_color="#ffffff", font=ctk.CTkFont(family=fontFamily, size=14, weight="bold"), command=self.processQuery).pack(side="right")
-        
         memFrame = ctk.CTkFrame(self.chatPanel, fg_color="transparent")
         memFrame.pack(fill="x", padx=20, pady=(0, 20))
         ctk.CTkButton(memFrame, text="🗑️ Clear Memory", command=self.clearMemory, fg_color="transparent", text_color=errorColor, font=ctk.CTkFont(size=12)).pack(side="right")
@@ -229,17 +264,22 @@ class ImageToWordApp(ctk.CTk):
     def addLog(self, msg):
         if not self.isChatOpen: self.openChatPanel()
         self.appendChatMessage("System", f"⚙️ {msg}")
+
     def processQuery(self):
         queryText = self.queryInput.get().strip()
         if not queryText: return
         self.queryInput.delete(0, "end")
         self.appendChatMessage("You", queryText)
-        responseMsg = "I'm analyzing your request locally."
-        if "privacy" in queryText.lower(): responseMsg = "Your data is strictly local. No cloud access."
-        elif "who" in queryText.lower() or "me" in queryText.lower():
-            fileCount = self.userMemory.get("processedFiles", 0)
-            responseMsg = f"You have processed {fileCount} files locally. I'm learning your handwriting style from these."
-        self.after(500, lambda: self.appendChatMessage("Agent", responseMsg))
+        if not self.llmClient.isActive():
+            self.after(500, lambda: self.appendChatMessage("Agent", "I need a Gemini API key to chat! Please add one in Settings ⚙️"))
+            return
+        context = ""
+        if self.ocrResult:
+            context = self.ocrResult.get("rawText", "")[:2000] 
+        def getAiResponse():
+            response = self.llmClient.getChatResponse(queryText, context)
+            self.after(0, lambda: self.appendChatMessage("Agent", response))
+        threading.Thread(target=getAiResponse, daemon=True).start()
 
     def onModeChanged(self, *args):
         if self.ocrModeVar.get() == "agentic": self.showSecurityGuidelines()
@@ -341,7 +381,12 @@ class ImageToWordApp(ctk.CTk):
             self.after(1800, lambda: self.addLog("Step 2: Tesseract OCR Engine analysis..."))
             resData = runOcr(self.imagePath, localMode=True)
             self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(resData.get('paragraphs', []))} text blocks..."))
-            if activeMode == "agentic": self.after(500, lambda: self.addLog("Agentic Refinement: Correcting grammatical layout..."))
+            if activeMode == "agentic" and self.llmClient.isActive():
+                self.after(500, lambda: self.addLog("Agentic Refinement: Connecting to Gemini for semantic correction..."))
+                rawText = resData.get("rawText", "")
+                refinedText = self.llmClient.refineOcrText(rawText)
+                resData["rawText"] = refinedText
+                self.after(1000, lambda: self.addLog("Refinement complete. Corrected typos and improved structure."))
             self.after(2500, lambda: self.after(0, self.onSuccess, resData))
         except Exception as e: self.after(0, self.onError, str(e))
     def onSuccess(self, resData):

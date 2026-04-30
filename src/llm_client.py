@@ -1,9 +1,18 @@
+"""
+Gemini AI Client Module
+Encapsulates communication with Google's Generative AI (Gemini) 
+for document refinement and conversational assistance.
+"""
+
 import google.generativeai as genai
 import os
 import json
 
 class GeminiClient:
+    """A high-level client for interacting with the Gemini 1.5 LLM."""
+    
     def __init__(self, apiKey):
+        """Initializes the Gemini model with the provided API key."""
         self.apiKey = apiKey
         if apiKey:
             genai.configure(api_key=apiKey)
@@ -12,9 +21,14 @@ class GeminiClient:
             self.model = None
 
     def isActive(self):
+        """Checks if the client has a valid model instance initialized."""
         return self.model is not None
 
     def refineOcrText(self, rawText):
+        """
+        Uses Gemini to perform semantic correction on raw OCR output.
+        Fixes typos, improves grammar, and enhances structural flow.
+        """
         if not self.isActive():
             return rawText
 
@@ -28,12 +42,18 @@ class GeminiClient:
         )
         
         try:
+            # Generate the cleaned version of the text
             response = self.model.generate_content(prompt)
             return response.text.strip()
         except Exception as e:
+            # Fallback to original text if the API call fails
             return rawText
 
     def getChatResponse(self, userQuery, documentContext=None):
+        """
+        Generates a conversational response for the Agent Assistant.
+        Provides context about the current document to improve answer relevance.
+        """
         if not self.isActive():
             return "I need an API key to provide intelligent responses. Please add one in settings."
 

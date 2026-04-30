@@ -453,7 +453,12 @@ class ImageToWordApp(ctk.CTk):
         self.resultText.delete("1.0", "end")
         
         extractedText = result.get("rawText", "")
-        if not extractedText: extractedText = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
+        if not extractedText: 
+            extractedText = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
+        
+        # Final safety net: apply masking at display level if checkbox is checked
+        if self.maskSensitiveVar.get():
+            extractedText = maskSensitiveInfo(extractedText)
         
         self.resultText.insert("1.0", extractedText)
         self.resultText.configure(state="disabled")

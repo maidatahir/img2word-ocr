@@ -124,14 +124,19 @@ def isBoldWord(word: str, conf: int) -> bool:
 
 def maskSensitiveInfo(text: str) -> str:
     """
-    Redacts emails and Pakistani CNIC numbers from the text for privacy.
-    Uses robust regex patterns that account for OCR noise.
+    Advanced masking that accounts for OCR noise (spaces, symbols).
+    Catching 'ali. khan.test@gmail.com' and '35202-1234567-1' even with noise.
     """
-    # Pattern accounts for single spaces often added by OCR
-    emailPattern = r'[a-zA-Z0-9_.+-]+\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
-    cnicPattern  = r'\d{5}-\d{7}-\d{1}'
+    # Email: Allows spaces before the @ symbol which are common in OCR
+    emailPattern = r'[a-zA-Z0-9_.+-]+(?:\s+[a-zA-Z0-9_.+-]+)*\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
     
+    # CNIC: Allows for various separators and nearby noise
+    cnicPattern  = r'\d{5}[-.\s]*\d{7}[-.\s]*\d{1}'
+    
+    # First, mask the emails
     maskedText = re.sub(emailPattern, "[EMAIL MASKED]", text)
+    
+    # Second, mask CNICs (handling potential noise around them)
     maskedText = re.sub(cnicPattern, "[CNIC MASKED]", maskedText)
     
     return maskedText

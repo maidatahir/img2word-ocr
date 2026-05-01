@@ -372,7 +372,7 @@ class ImageToWordApp(ctk.CTk):
         
         self.ocrModeVar = ctk.StringVar(value="simple")
         self.ocrModeVar.trace_add("write", self.onModeChanged)
-        self.maskSensitiveVar = ctk.BooleanVar(value=False)
+        self.maskSensitiveVar = ctk.BooleanVar(value=True)  # ON by default for privacy
         
         radioFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
         radioFrame.pack(pady=30)
@@ -414,6 +414,8 @@ class ImageToWordApp(ctk.CTk):
         
         ctk.CTkLabel(headerFrame, text="Extraction Preview", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=textPrimary).pack(side="left")
         ctk.CTkButton(headerFrame, text="← Start Over", command=self.showUploadBox, width=100, fg_color="transparent", text_color=accentColor, font=ctk.CTkFont(size=13, weight="bold")).pack(side="right")
+        self.redactionBanner = ctk.CTkLabel(self.resultFrame, text="", font=ctk.CTkFont(family=fontFamily, size=12, weight="bold"), text_color="#ffffff", fg_color=successColor, corner_radius=6)
+        self.redactionBanner.pack(fill="x", padx=25, pady=(0, 5))
         
         self.resultText = ctk.CTkTextbox(self.resultFrame, fg_color=bgTint, text_color=textPrimary, font=ctk.CTkFont(family=fontFamily, size=13), wrap="word", corner_radius=10, border_width=1, border_color="#dee2e6")
         self.resultText.pack(fill="both", expand=True, padx=25, pady=10)
@@ -456,9 +458,19 @@ class ImageToWordApp(ctk.CTk):
         if not extractedText: 
             extractedText = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
         
-        # Final safety net: apply masking at display level if checkbox is checked
+        # Apply masking at display level and show redaction banner
         if self.maskSensitiveVar.get():
+            import re
+            emailCount = len(re.findall(r'[a-zA-Z0-9_.+-]+(?:\s+[a-zA-Z0-9_.+-]+)*\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', extractedText))
+            cnicCount  = len(re.findall(r'\d{5}[-.\s]*\d{7}[-.\s]*\d{1}', extractedText))
             extractedText = maskSensitiveInfo(extractedText)
+            total = emailCount + cnicCount
+            if total > 0:
+                self.redactionBanner.configure(text=f"  🔒 {total} sensitive item(s) redacted: {emailCount} email(s), {cnicCount} CNIC(s)  ")
+            else:
+                self.redactionBanner.configure(text="  🔒 Masking active — No sensitive data detected  ")
+        else:
+            self.redactionBanner.configure(text="  ⚠️  Masking is OFF — sensitive data may be visible  ", fg_color=errorColor)
         
         self.resultText.insert("1.0", extractedText)
         self.resultText.configure(state="disabled")

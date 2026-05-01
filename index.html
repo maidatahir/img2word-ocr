@@ -22,7 +22,6 @@
         body { background-color: var(--bg); min-height: 100vh; color: var(--text); display: flex; flex-direction: column; }
 
         .navBar { height: 65px; padding: 0 40px; background: var(--card); display: flex; justify-content: space-between; align-items: center; }
-
         .brandName { font-weight: 700; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
         .askAgent { color: var(--primary); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
 
@@ -40,14 +39,10 @@
         .modesContainer { display: flex; justify-content: center; gap: 25px; }
 
         .modeCard { flex: 1; max-width: 220px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; transition: 0.2s; }
-
         .modeCard.selected { border-color: var(--primary); border-width: 2px; }
-
         .radioCircle { width: 18px; height: 18px; border: 2px solid #9ca3af; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
         .modeCard.selected .radioCircle { border-color: var(--primary); }
         .modeCard.selected .radioCircle::after { content: ''; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; }
-
         .modeText { font-size: 0.9rem; font-weight: 600; line-height: 1.3; }
         .modeDesc { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
 
@@ -55,9 +50,7 @@
         .maskToggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
 
         .modalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
-
         .modalContent { background: white; width: 90%; max-width: 500px; padding: 40px; border-radius: 20px; text-align: left; }
-
         .modalTitle { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; text-align: center; }
         .modalBody { font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px; color: var(--text); }
         .checkboxRow { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; cursor: pointer; }
@@ -107,11 +100,11 @@
         <div class="modesContainer">
             <div class="modeCard selected" data-mode="simple" onclick="selectAppMode(this)">
                 <div class="radioCircle"></div>
-                <div class="modeText">Simple OCR<br><span class="modeDesc">Plain text</span></div>
+                <div class="modeText">Simple OCR<br><span class="modeDesc">Local · No internet</span></div>
             </div>
             <div class="modeCard" data-mode="agentic" onclick="selectAppMode(this)">
                 <div class="radioCircle"></div>
-                <div class="modeText">Agentic Mode<br><span class="modeDesc">Context Aware</span></div>
+                <div class="modeText">Agentic Mode<br><span class="modeDesc">Gemini AI · Requires key</span></div>
             </div>
         </div>
 
@@ -120,7 +113,7 @@
             🔒 Mask Sensitive Info (Emails, CNIC)
         </label>
 
-        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 20px; font-style: italic;">*Your privacy is protected! No data is transmitted.</p>
+        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 20px; font-style: italic;">*Simple OCR runs entirely in your browser. No data is transmitted.</p>
     </div>
 
     <div class="resultCard" id="resultCard">
@@ -135,20 +128,20 @@
 
     <div class="modalOverlay" id="termsModal">
         <div class="modalContent">
-            <h2 class="modalTitle">Agentic Privacy & Terms</h2>
+            <h2 class="modalTitle">Privacy & Terms</h2>
             <div class="modalBody">
-                By enabling the <b>Agentic Extraction Suite</b>, you agree to:<br><br>
-                • <b>LOCAL SOVEREIGNTY:</b> Reasoning occurs 100% in your browser. No data leaves this session unless you use an external API key.<br>
-                • <b>EPHEMERAL MEMORY:</b> The Agent learns from your uploads to improve character recognition locally.<br>
-                • <b>DATA INTEGRITY:</b> You remain the sole owner of all extracted intellectual property.
+                By using this tool, you agree to:<br><br>
+                • <b>LOCAL SOVEREIGNTY:</b> Simple OCR runs 100% in your browser. No data leaves your device.<br>
+                • <b>AGENTIC MODE:</b> Text is sent to the Gemini API for AI refinement. Your API key is never stored.<br>
+                • <b>DATA INTEGRITY:</b> You remain the sole owner of all extracted content.
             </div>
             <label class="checkboxRow">
                 <input type="checkbox" id="checkPrivacy" onchange="validateAcceptance()">
-                <div class="checkboxLabel">I agree to the Agentic local data sovereignty.</div>
+                <div class="checkboxLabel">I understand how my data is processed.</div>
             </label>
             <label class="checkboxRow">
                 <input type="checkbox" id="checkMemory" onchange="validateAcceptance()">
-                <div class="checkboxLabel">I understand the Ephemeral Memory features.</div>
+                <div class="checkboxLabel">I accept the terms of use.</div>
             </label>
             <div class="modalBtns">
                 <button class="modalBtn btnCancel" onclick="closeTermsModal()">Decline</button>
@@ -166,7 +159,7 @@
             <div class="logEntry">Ready to process. Upload an image to begin.</div>
         </div>
         <div style="margin-top: 15px;">
-            <input type="password" id="geminiKey" placeholder="🔑 Gemini API Key" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; outline: none; font-size: 0.8rem;">
+            <input type="password" id="geminiKey" placeholder="🔑 Gemini API Key (Agentic Mode only)" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; outline: none; font-size: 0.8rem;">
             <button onclick="clearLocalMemory()" style="background: none; border: none; color: #dc3545; font-size: 0.75rem; font-weight: 700; margin-top: 15px; cursor: pointer; text-decoration: underline;">🗑️ Clear Agent Memory</button>
         </div>
     </div>
@@ -192,19 +185,17 @@
         function closeTermsModal() { policyModal.style.display = 'none'; }
 
         function validateAcceptance() {
-            if (privacyCheck.checked && memoryCheck.checked) {
-                confirmBtn.disabled = false; confirmBtn.classList.add('active');
-            } else {
-                confirmBtn.disabled = true; confirmBtn.classList.remove('active');
-            }
+            const ready = privacyCheck.checked && memoryCheck.checked;
+            confirmBtn.disabled = !ready;
+            confirmBtn.classList.toggle('active', ready);
         }
 
         function handleTermsAccept() { closeTermsModal(); document.getElementById('fileInput').click(); }
 
         function clearLocalMemory() {
-            if (confirm("Are you sure you want to delete all local agent learning data?")) {
+            if (confirm("Delete all local agent learning data?")) {
                 localStorage.clear();
-                pushLog("Agent: All local memory and character patterns have been erased.");
+                pushLog("Agent: Local memory cleared.");
             }
         }
 
@@ -216,57 +207,28 @@
             activityLogs.scrollTop = activityLogs.scrollHeight;
         }
 
-        // OCR-noise-aware sensitive data masking
         function maskSensitiveInfo(text) {
-            // Handles emails with OCR-induced spaces like "ali. khan.test @ gmail.com"
             const emailPattern = /[a-zA-Z0-9_.+-]+(?:\s+[a-zA-Z0-9_.+-]+)*\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g;
-            // Handles CNICs with flexible separators: dashes, dots, or spaces
-            const cnicPattern = /\d{5}[-.\s]*\d{7}[-.\s]*\d{1}/g;
-
+            const cnicPattern  = /\d{5}[-.\s]*\d{7}[-.\s]*\d{1}/g;
             const emailCount = (text.match(emailPattern) || []).length;
             const cnicCount  = (text.match(cnicPattern)  || []).length;
-
             let masked = text.replace(emailPattern, '[EMAIL MASKED]');
             masked = masked.replace(cnicPattern, '[CNIC MASKED]');
-
             return { masked, emailCount, cnicCount };
         }
 
-        async function processAgenticImage(file) {
-            return new Promise((resolve) => {
-                const reader = new Image();
-                reader.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = reader.width * 1.5;
-                    canvas.height = reader.height * 1.5;
-                    context.drawImage(reader, 0, 0, canvas.width, canvas.height);
-                    const pixelData = context.getImageData(0, 0, canvas.width, canvas.height);
-                    const rawBuffer = pixelData.data;
-                    for (let i = 0; i < rawBuffer.length; i += 4) {
-                        const luminance = (rawBuffer[i] + rawBuffer[i + 1] + rawBuffer[i + 2]) / 3;
-                        const binaryValue = luminance > 120 ? 255 : 0;
-                        rawBuffer[i] = rawBuffer[i+1] = rawBuffer[i+2] = binaryValue;
-                    }
-                    context.putImageData(pixelData, 0, 0);
-                    canvas.toBlob(resolve, 'image/png');
-                };
-                reader.src = URL.createObjectURL(file);
+        async function runGeminiRefinement(rawText, apiKey) {
+            const prompt = `You are an expert OCR corrector. Fix character errors, spacing issues, and grammar in the following scanned document text. Output only the corrected text with no explanation.\n\nRAW TEXT:\n${rawText}\n\nCORRECTED TEXT:`;
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-        }
-
-        async function refineWithAi(rawText, authKey) {
-            if (!authKey) return rawText;
-            try {
-                const requestPrompt = `Correct OCR text. Solve 'I vs T' errors. Output only clean text:\n\n${rawText}`;
-                const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${authKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: requestPrompt }] }] })
-                });
-                const responseData = await apiResponse.json();
-                return responseData.candidates[0].content.parts[0].text;
-            } catch (err) { return rawText; }
+            const data = await response.json();
+            if (data.candidates && data.candidates[0]) {
+                return data.candidates[0].content.parts[0].text;
+            }
+            return rawText;
         }
 
         function downloadResult(type) {
@@ -282,79 +244,65 @@
             if (!selectedFile) return;
 
             appPanel.classList.add('active');
-            pushLog(`Agent: Pipeline [${currentAppMode.toUpperCase()}] Initialized.`);
-
-            let jobInput = selectedFile;
+            pushLog(`Mode: ${currentAppMode.toUpperCase()}`);
 
             try {
-                if (currentAppMode === "agentic") {
-                    pushLog("Agent: Applying High-Relay Magnification (1.5x)...");
-                    jobInput = await processAgenticImage(selectedFile);
-                    pushLog("Agent: Image binarized for character isolation.");
-                } else {
-                    pushLog("Agent: Using direct file buffer...");
-                }
-
                 const tesseractEngine = await Tesseract.createWorker('eng', 1, {
                     logger: update => {
-                        if (update.status === 'recognizing text' && currentAppMode === "agentic") {
-                            const progressVal = Math.floor(update.progress * 100);
-                            if (progressVal % 25 === 0) pushLog(`Agent: Brain Active... ${progressVal}%`);
+                        if (update.status === 'recognizing text') {
+                            const pct = Math.floor(update.progress * 100);
+                            if (pct % 25 === 0) pushLog(`OCR progress: ${pct}%`);
                         }
                     }
                 });
 
-                if (currentAppMode === "agentic") {
-                    await tesseractEngine.setParameters({ tessedit_pageseg_mode: '6' });
-                }
+                pushLog("Running Tesseract OCR locally...");
+                const { data: { text } } = await tesseractEngine.recognize(selectedFile);
+                await tesseractEngine.terminate();
+                pushLog(`Extracted ${text.split('\n').length} lines.`);
 
-                pushLog("Agent: Decoding character geometry...");
-                const { data: { text } } = await tesseractEngine.recognize(jobInput);
-
-                let processedText = text;
-                const userKey = document.getElementById('geminiKey').value;
+                let finalText = text;
 
                 if (currentAppMode === "agentic") {
-                    if (userKey) {
-                        pushLog("Agent: Sending to Gemini Engine for reasoning...");
-                        processedText = await refineWithAi(text, userKey);
+                    const apiKey = document.getElementById('geminiKey').value.trim();
+                    if (!apiKey) {
+                        pushLog("⚠️ Agentic Mode requires a Gemini API key. Falling back to raw OCR.");
                     } else {
-                        pushLog("Agent: Running Pattern-Match correction...");
-                        await new Promise(r => setTimeout(r, 600));
-                        processedText = text.replace(/Tndividual/gi, 'Individual').replace(/Tnformation/gi, 'Information');
+                        pushLog("Sending text to Gemini API for refinement...");
+                        try {
+                            finalText = await runGeminiRefinement(text, apiKey);
+                            pushLog("Gemini refinement complete.");
+                        } catch (err) {
+                            pushLog(`⚠️ Gemini API error: ${err.message}. Using raw OCR.`);
+                        }
                     }
                 }
 
-                // Apply sensitive info masking at the display level
                 const maskingEnabled = document.getElementById('maskToggle').checked;
                 const banner = document.getElementById('redactionBanner');
 
                 if (maskingEnabled) {
-                    pushLog("Security: Scanning for emails and CNIC numbers...");
-                    const { masked, emailCount, cnicCount } = maskSensitiveInfo(processedText);
-                    processedText = masked;
+                    pushLog("Scanning for sensitive data...");
+                    const { masked, emailCount, cnicCount } = maskSensitiveInfo(finalText);
+                    finalText = masked;
                     const total = emailCount + cnicCount;
-                    if (total > 0) {
-                        banner.className = 'redactionBanner success';
-                        banner.innerText = `🔒 ${total} sensitive item(s) redacted: ${emailCount} email(s), ${cnicCount} CNIC(s)`;
-                        pushLog(`Security: Redacted ${emailCount} email(s) and ${cnicCount} CNIC(s).`);
-                    } else {
-                        banner.className = 'redactionBanner success';
-                        banner.innerText = '🔒 Masking active — No sensitive data detected';
-                    }
+                    banner.className = 'redactionBanner success';
+                    banner.innerText = total > 0
+                        ? `🔒 ${total} item(s) redacted: ${emailCount} email(s), ${cnicCount} CNIC(s)`
+                        : '🔒 Masking active — No sensitive data detected';
+                    if (total > 0) pushLog(`Redacted ${total} sensitive item(s).`);
                 } else {
                     banner.className = 'redactionBanner warning';
                     banner.innerText = '⚠️ Masking is OFF — sensitive data may be visible';
                 }
 
-                document.getElementById('resultPreview').value = processedText;
+                document.getElementById('resultPreview').value = finalText;
                 document.getElementById('resultCard').style.display = 'block';
                 document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+                pushLog("Done.");
 
-                pushLog("Agent: Process complete.");
-                await tesseractEngine.terminate();
-            } catch (fail) {
-                pushLog(`⚠️ Agent Error: ${fail.message}`);
+            } catch (err) {
+                pushLog(`⚠️ Error: ${err.message}`);
             }
         });
     </script>

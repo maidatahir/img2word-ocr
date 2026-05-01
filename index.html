@@ -13,26 +13,15 @@
             --card: #ffffff;
             --text: #212529;
             --muted: #6c757d;
+            --success: #198754;
+            --error: #dc3545;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica', 'Arial', sans-serif; }
 
-        body {
-            background-color: var(--bg);
-            min-height: 100vh;
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-        }
+        body { background-color: var(--bg); min-height: 100vh; color: var(--text); display: flex; flex-direction: column; }
 
-        .navBar {
-            height: 65px;
-            padding: 0 40px;
-            background: var(--card);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .navBar { height: 65px; padding: 0 40px; background: var(--card); display: flex; justify-content: space-between; align-items: center; }
 
         .brandName { font-weight: 700; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
         .askAgent { color: var(--primary); font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.95rem; }
@@ -41,130 +30,61 @@
         .heroSection h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 10px; color: #1a1a1a; }
         .heroSection p { color: var(--muted); font-size: 1.1rem; }
 
-        .mainCard {
-            background: var(--card);
-            width: 90%;
-            max-width: 950px;
-            margin: 20px auto;
-            border-radius: 20px;
-            padding: 60px 40px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            text-align: center;
-            border: 1px solid rgba(0,0,0,0.05);
-        }
+        .mainCard { background: var(--card); width: 90%; max-width: 950px; margin: 20px auto; border-radius: 20px; padding: 60px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); text-align: center; border: 1px solid rgba(0,0,0,0.05); }
 
         .uploadTitle { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
         .uploadSubtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 35px; }
 
-        .browseBtn {
-            background: var(--primary);
-            color: white;
-            padding: 14px 45px;
-            border-radius: 8px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            font-size: 1.1rem;
-            margin-bottom: 45px;
-            display: inline-flex;
-            align-items: center; gap: 10px;
-        }
+        .browseBtn { background: var(--primary); color: white; padding: 14px 45px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 1.1rem; margin-bottom: 30px; display: inline-flex; align-items: center; gap: 10px; }
 
         .modesContainer { display: flex; justify-content: center; gap: 25px; }
 
-        .modeCard {
-            flex: 1;
-            max-width: 220px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 18px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-align: left;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .modeCard { flex: 1; max-width: 220px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer; transition: 0.2s; }
 
         .modeCard.selected { border-color: var(--primary); border-width: 2px; }
 
-        .radioCircle {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #9ca3af;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        .radioCircle { width: 18px; height: 18px; border: 2px solid #9ca3af; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
         .modeCard.selected .radioCircle { border-color: var(--primary); }
-        .modeCard.selected .radioCircle::after {
-            content: '';
-            width: 10px;
-            height: 10px;
-            background: var(--primary);
-            border-radius: 50%;
-        }
+        .modeCard.selected .radioCircle::after { content: ''; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; }
 
         .modeText { font-size: 0.9rem; font-weight: 600; line-height: 1.3; }
         .modeDesc { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
 
-        .modalOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
+        .maskToggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 25px; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--text); }
+        .maskToggle input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
 
-        .modalContent {
-            background: white;
-            width: 90%;
-            max-width: 500px;
-            padding: 40px;
-            border-radius: 20px;
-            text-align: left;
-        }
+        .modalOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
+
+        .modalContent { background: white; width: 90%; max-width: 500px; padding: 40px; border-radius: 20px; text-align: left; }
 
         .modalTitle { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-bottom: 20px; text-align: center; }
         .modalBody { font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px; color: var(--text); }
-        
         .checkboxRow { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 15px; cursor: pointer; }
         .checkboxRow input { margin-top: 4px; width: 18px; height: 18px; cursor: pointer; }
         .checkboxLabel { font-weight: 600; font-size: 0.85rem; }
-
         .modalBtns { display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
         .modalBtn { padding: 12px 25px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; }
         .btnCancel { background: none; color: #dc3545; }
         .btnAccept { background: #d1d1d6; color: white; transition: 0.3s; }
         .btnAccept.active { background: var(--primary); }
 
-        .agentPanel {
-            position: fixed;
-            top: 75px;
-            right: -32%;
-            width: 30%;
-            height: 85vh;
-            background: white;
-            border-radius: 15px;
-            box-shadow: -5px 5px 20px rgba(0,0,0,0.1);
-            transition: right 0.4s ease;
-            z-index: 1000;
-            padding: 25px;
-            border: 1px solid #dee2e6;
-        }
-
+        .agentPanel { position: fixed; top: 75px; right: -32%; width: 30%; height: 85vh; background: white; border-radius: 15px; box-shadow: -5px 5px 20px rgba(0,0,0,0.1); transition: right 0.4s ease; z-index: 1000; padding: 25px; border: 1px solid #dee2e6; }
         .agentPanel.active { right: 20px; }
         #fileInput { display: none; }
         .logBox { background: #f8f9fa; border-radius: 10px; height: 60%; overflow-y: auto; padding: 15px; font-size: 0.9rem; border: 1px solid #dee2e6; margin-top: 15px; }
         .logEntry { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--primary); }
+
+        .resultCard { background: var(--card); width: 90%; max-width: 950px; margin: 20px auto; border-radius: 20px; padding: 30px 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); display: none; }
+
+        .redactionBanner { padding: 10px 15px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; margin-bottom: 15px; display: none; }
+        .redactionBanner.success { background: #d1e7dd; color: var(--success); display: block; }
+        .redactionBanner.warning { background: #f8d7da; color: var(--error); display: block; }
+
+        #resultPreview { width: 100%; height: 300px; border: 1px solid #dee2e6; border-radius: 10px; padding: 15px; font-size: 0.9rem; background: #f8f9fa; resize: vertical; font-family: monospace; }
+
+        .downloadBtn { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .dlBtn { padding: 10px 22px; border-radius: 8px; font-weight: 700; border: none; cursor: pointer; font-size: 0.9rem; color: white; }
     </style>
 </head>
 <body>
@@ -181,10 +101,7 @@
     <div class="mainCard">
         <h2 class="uploadTitle">Drop, Upload or Paste Images</h2>
         <p class="uploadSubtitle">Supported formats: JPG, PNG, GIF, JFIF, HEIC, PDF</p>
-        
-        <button class="browseBtn" onclick="openTermsModal()">
-            <span>↑</span> Browse
-        </button>
+        <button class="browseBtn" onclick="openTermsModal()"><span>↑</span> Browse</button>
         <input type="file" id="fileInput" accept="image/*">
 
         <div class="modesContainer">
@@ -196,6 +113,23 @@
                 <div class="radioCircle"></div>
                 <div class="modeText">Agentic Mode<br><span class="modeDesc">Context Aware</span></div>
             </div>
+        </div>
+
+        <label class="maskToggle">
+            <input type="checkbox" id="maskToggle" checked>
+            🔒 Mask Sensitive Info (Emails, CNIC)
+        </label>
+
+        <p style="color: var(--muted); font-size: 0.8rem; margin-top: 20px; font-style: italic;">*Your privacy is protected! No data is transmitted.</p>
+    </div>
+
+    <div class="resultCard" id="resultCard">
+        <h3 style="font-size: 1.2rem; font-weight: 700; margin-bottom: 15px;">Extraction Preview</h3>
+        <div class="redactionBanner" id="redactionBanner"></div>
+        <textarea id="resultPreview" readonly></textarea>
+        <div class="downloadBtn">
+            <button class="dlBtn" style="background: #8c52ff;" onclick="downloadResult('txt')">📝 Text (.txt)</button>
+            <button class="dlBtn" style="background: #4f46e5;" onclick="downloadResult('html')">🌐 HTML (.html)</button>
         </div>
     </div>
 
@@ -247,6 +181,7 @@
         let currentAppMode = "simple";
 
         function toggleAgentPanel() { appPanel.classList.toggle('active'); }
+
         function selectAppMode(element) {
             document.querySelectorAll('.modeCard').forEach(c => c.classList.remove('selected'));
             element.classList.add('selected');
@@ -258,11 +193,9 @@
 
         function validateAcceptance() {
             if (privacyCheck.checked && memoryCheck.checked) {
-                confirmBtn.disabled = false;
-                confirmBtn.classList.add('active');
+                confirmBtn.disabled = false; confirmBtn.classList.add('active');
             } else {
-                confirmBtn.disabled = true;
-                confirmBtn.classList.remove('active');
+                confirmBtn.disabled = true; confirmBtn.classList.remove('active');
             }
         }
 
@@ -281,6 +214,22 @@
             div.innerText = text;
             activityLogs.appendChild(div);
             activityLogs.scrollTop = activityLogs.scrollHeight;
+        }
+
+        // OCR-noise-aware sensitive data masking
+        function maskSensitiveInfo(text) {
+            // Handles emails with OCR-induced spaces like "ali. khan.test @ gmail.com"
+            const emailPattern = /[a-zA-Z0-9_.+-]+(?:\s+[a-zA-Z0-9_.+-]+)*\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/g;
+            // Handles CNICs with flexible separators: dashes, dots, or spaces
+            const cnicPattern = /\d{5}[-.\s]*\d{7}[-.\s]*\d{1}/g;
+
+            const emailCount = (text.match(emailPattern) || []).length;
+            const cnicCount  = (text.match(cnicPattern)  || []).length;
+
+            let masked = text.replace(emailPattern, '[EMAIL MASKED]');
+            masked = masked.replace(cnicPattern, '[CNIC MASKED]');
+
+            return { masked, emailCount, cnicCount };
         }
 
         async function processAgenticImage(file) {
@@ -320,6 +269,14 @@
             } catch (err) { return rawText; }
         }
 
+        function downloadResult(type) {
+            const content = document.getElementById('resultPreview').value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `extracted_${currentAppMode}.${type}`; a.click();
+        }
+
         document.getElementById('fileInput').addEventListener('change', async (event) => {
             const selectedFile = event.target.files[0];
             if (!selectedFile) return;
@@ -353,7 +310,7 @@
 
                 pushLog("Agent: Decoding character geometry...");
                 const { data: { text } } = await tesseractEngine.recognize(jobInput);
-                
+
                 let processedText = text;
                 const userKey = document.getElementById('geminiKey').value;
 
@@ -368,11 +325,33 @@
                     }
                 }
 
-                pushLog("Agent: Process complete. Delivering file.");
-                const outputBlob = new Blob([processedText], { type: 'text/plain' });
-                const blobUrl = URL.createObjectURL(outputBlob);
-                const downloadLink = document.createElement('a');
-                downloadLink.href = blobUrl; downloadLink.download = `extracted_${currentAppMode}.txt`; downloadLink.click();
+                // Apply sensitive info masking at the display level
+                const maskingEnabled = document.getElementById('maskToggle').checked;
+                const banner = document.getElementById('redactionBanner');
+
+                if (maskingEnabled) {
+                    pushLog("Security: Scanning for emails and CNIC numbers...");
+                    const { masked, emailCount, cnicCount } = maskSensitiveInfo(processedText);
+                    processedText = masked;
+                    const total = emailCount + cnicCount;
+                    if (total > 0) {
+                        banner.className = 'redactionBanner success';
+                        banner.innerText = `🔒 ${total} sensitive item(s) redacted: ${emailCount} email(s), ${cnicCount} CNIC(s)`;
+                        pushLog(`Security: Redacted ${emailCount} email(s) and ${cnicCount} CNIC(s).`);
+                    } else {
+                        banner.className = 'redactionBanner success';
+                        banner.innerText = '🔒 Masking active — No sensitive data detected';
+                    }
+                } else {
+                    banner.className = 'redactionBanner warning';
+                    banner.innerText = '⚠️ Masking is OFF — sensitive data may be visible';
+                }
+
+                document.getElementById('resultPreview').value = processedText;
+                document.getElementById('resultCard').style.display = 'block';
+                document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+
+                pushLog("Agent: Process complete.");
                 await tesseractEngine.terminate();
             } catch (fail) {
                 pushLog(`⚠️ Agent Error: ${fail.message}`);

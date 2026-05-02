@@ -59,12 +59,15 @@ def buildDocx(ocrResult, outputPath):
         docSection.bottom_margin = Inches(1.0)
         docSection.left_margin   = Inches(1.25)
         docSection.right_margin  = Inches(1.25)
+    
     normalStyle = doc.styles["Normal"]
     normalStyle.font.name = bodyFont
     normalStyle.font.size = Pt(bodyFontSize)
+    
+    rawContent = ocrResult.get("rawText", "")
     paragraphList = ocrResult.get("paragraphs", [])
-    if not paragraphList:
-        rawContent = ocrResult.get("rawText", "")
+    
+    if ocrResult.get("isRefined") or not paragraphList:
         for rawLine in rawContent.splitlines():
             rawLine = rawLine.strip()
             if not rawLine:
@@ -87,6 +90,7 @@ def buildDocx(ocrResult, outputPath):
                 addHeading(doc, blockText, headingLevel=headingLevel)
             else:
                 addBodyParagraph(doc, block)
+    
     os.makedirs(os.path.dirname(os.path.abspath(outputPath)), exist_ok=True)
     doc.save(outputPath)
     return outputPath

@@ -16,10 +16,14 @@ class GeminiClient:
         if not self.isActive():
             return rawText
         prompt = (
-            "You are an expert document digitizer. Fix character misinterpretations, "
-            "correct grammatical errors, and ensure structure makes sense. "
-            "Maintain the original meaning. Do not add conversational filler.\n\n"
-            f"RAW OCR TEXT:\n{rawText}\n\nREFINED TEXT:"
+            "You are a professional document reconstruction agent. Your task is to transform raw, noisy OCR output into a perfectly formatted, grammatically correct document.\n\n"
+            "RULES:\n"
+            "1. Fix all character misinterpretations (e.g., 'Tnformation' -> 'Information', '1' -> 'I').\n"
+            "2. Correct sentence structure and grammar while preserving the original meaning.\n"
+            "3. Remove obvious OCR noise (stray symbols like ~~ or | if they don't belong).\n"
+            "4. Organize the text into logical paragraphs if it looks like a continuous block.\n"
+            "5. OUTPUT ONLY THE REFINED TEXT. DO NOT EXPLAIN YOUR CHANGES.\n\n"
+            f"RAW NOISY TEXT:\n{rawText}\n\nREFINED PROFESSIONAL TEXT:"
         )
         try:
             response = self.model.generate_content(prompt)

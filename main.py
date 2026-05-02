@@ -515,6 +515,7 @@ class ImageToWordApp(ctk.CTk):
                 rawText = resData.get("rawText", "")
                 refinedText = self.llmClient.refineOcrText(rawText)
                 resData["rawText"] = refinedText
+                resData["isRefined"] = True
                 self.after(1000, lambda: self.addLog("Refinement complete. Corrected typos and improved structure."))
 
             # Step 5: Privacy Redaction (If selected)

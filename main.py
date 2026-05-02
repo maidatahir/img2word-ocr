@@ -1,10 +1,3 @@
-"""
-Image To Text Converter - Agentic Version
-Author: Ali Khan (Project Team)
-Description: A desktop application built with CustomTkinter and Tesseract OCR 
-to convert images to editable Word documents with AI-powered refinement.
-"""
-
 import os
 import sys
 import threading
@@ -14,7 +7,6 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import customtkinter as ctk
 
-# Ensure the local source directory is in the path for module imports
 baseDir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, baseDir)
 
@@ -22,11 +14,9 @@ from src.ocr_engine       import runOcr, maskSensitiveInfo
 from src.document_builder import buildDocx, buildPdf, buildTxt
 from src.llm_client      import GeminiClient
 
-# UI Theme Configuration
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
-# Color Palette for a premium look
 bgTint         = "#f8f9fa"   
 cardTint       = "#ffffff"   
 accentColor    = "#8c52ff"   
@@ -37,13 +27,10 @@ successColor   = "#198754"
 errorColor     = "#dc3545"   
 fontFamily     = "Helvetica" 
 
-# Local Data Storage Paths
 settingsPath   = os.path.join(baseDir, "settings.json")
 memoryPath     = os.path.join(baseDir, "user_memory.json")
 
 class ImageToWordApp(ctk.CTk):
-    """Main Application Class for the Image to Word Converter."""
-    
     def __init__(self):
         super().__init__()
         self.title("Image to Text Converter")
@@ -51,19 +38,16 @@ class ImageToWordApp(ctk.CTk):
         self.minsize(1000, 750)
         self.configure(fg_color=bgTint)
 
-        # Application State
         self.imagePath = None
         self.tkImg     = None
         self.ocrResult = None
         self.isProcessing = False
         
-        # UI State for the sliding Chat Panel
         self.isChatOpen = False
         self.isAnimating = False
         self.currentRelX = 1.0 
         self.chatPanelWidthRel = 0.32
 
-        # Initialize Data and LLM Client
         self.userMemory = self.loadMemory()
         self.settings = self.loadSettings()
         self.llmClient = GeminiClient(self.settings.get("gemini_api_key"))
@@ -71,7 +55,6 @@ class ImageToWordApp(ctk.CTk):
         self.buildUi()
         self.checkTesseract()
 
-        # Dynamic Background Animation state
         self.pastelColors = [(255, 209, 220), (230, 230, 250), (209, 236, 241), (212, 237, 218), (255, 243, 205)]
         self.currentColorIndex = 0
         self.nextColorIndex = 1
@@ -79,7 +62,6 @@ class ImageToWordApp(ctk.CTk):
         self.animateBackground()
 
     def loadMemory(self):
-        """Loads the user memory from the local JSON file."""
         if os.path.exists(memoryPath):
             try:
                 with open(memoryPath, "r") as f: return json.load(f)
@@ -87,7 +69,6 @@ class ImageToWordApp(ctk.CTk):
         return {}
 
     def loadSettings(self):
-        """Loads application settings, including the Gemini API key."""
         if os.path.exists(settingsPath):
             try:
                 with open(settingsPath, "r") as f: return json.load(f)
@@ -95,16 +76,13 @@ class ImageToWordApp(ctk.CTk):
         return {}
 
     def saveSettings(self):
-        """Saves current settings to the local JSON file."""
         with open(settingsPath, "w", encoding="utf-8") as f:
             json.dump(self.settings, f)
 
     def saveMemory(self):
-        """Persists user memory data."""
         with open(memoryPath, "w") as f: json.dump(self.userMemory, f)
 
     def animateBackground(self):
-        """Creates a smooth, ambient background color transition."""
         colorOne = self.pastelColors[self.currentColorIndex]
         colorTwo = self.pastelColors[self.nextColorIndex]
         redVal = int(colorOne[0] + (colorTwo[0] - colorOne[0]) * self.gradientStep)
@@ -124,7 +102,6 @@ class ImageToWordApp(ctk.CTk):
         self.after(50, self.animateBackground)
 
     def showTermsModal(self, onAccept=None):
-        """Displays the mandatory Privacy and Terms of Use modal."""
         modalWindow = ctk.CTkToplevel(self)
         modalWindow.title("Terms & Privacy")
         modalWindow.geometry("550x500")
@@ -171,7 +148,6 @@ class ImageToWordApp(ctk.CTk):
         self.wait_window(modalWindow)
 
     def showSettingsModal(self):
-        """Displays the System Settings modal for API key management."""
         settingsWindow = ctk.CTkToplevel(self)
         settingsWindow.title("System Settings")
         settingsWindow.geometry("500x350")
@@ -197,7 +173,6 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkButton(settingsWindow, text="Save Settings", command=saveApiKey, fg_color=accentColor, hover_color=accentHover, height=45, width=200, corner_radius=8).pack(pady=20)
 
     def showSecurityGuidelines(self):
-        """Displays the Agentic Security Protocol window."""
         securityWindow = ctk.CTkToplevel(self)
         securityWindow.title("Agentic Security Protocol")
         securityWindow.geometry("500x400")
@@ -217,14 +192,12 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkButton(securityWindow, text="I Understand", command=securityWindow.destroy, fg_color="#0d6efd", corner_radius=8).pack(pady=30)
 
     def checkTesseract(self):
-        """Verifies if Tesseract OCR is installed and accessible."""
         try:
             import pytesseract
             pytesseract.get_tesseract_version()
         except: messagebox.showerror("Tesseract Not Found", "Please install Tesseract OCR.")
 
     def buildUi(self):
-        """Constructs the main user interface components."""
         self.navFrame = ctk.CTkFrame(self, height=65, fg_color=cardTint, corner_radius=0)
         self.navFrame.pack(fill="x", side="top")
         self.navFrame.pack_propagate(False)
@@ -258,7 +231,6 @@ class ImageToWordApp(ctk.CTk):
         self.buildChatUi()
 
     def buildChatUi(self):
-        """Constructs the sidebar chat interface for the AI assistant."""
         chatHeader = ctk.CTkFrame(self.chatPanel, height=60, fg_color="transparent")
         chatHeader.pack(fill="x", padx=20, pady=(20, 0))
         ctk.CTkLabel(chatHeader, text="Agent Assistant", font=ctk.CTkFont(family=fontFamily, size=18, weight="bold"), text_color=accentColor).pack(side="left")
@@ -280,32 +252,27 @@ class ImageToWordApp(ctk.CTk):
         self.appendChatMessage("Agent", "Hello! I am your AI Assistant. I learn from your local files to improve over time. How can I help?")
 
     def clearMemory(self):
-        """Clears the local user memory and refreshes the chat."""
         self.userMemory = {}
         self.saveMemory()
         self.appendChatMessage("System", "Agent memory has been cleared successfully.")
 
     def toggleChatPanel(self):
-        """Toggles the visibility of the Agent Assistant panel."""
         if self.isAnimating: return
         if self.isChatOpen: self.closeChatPanel()
         else: self.openChatPanel()
 
     def openChatPanel(self):
-        """Initiates the opening animation for the chat panel."""
         if self.isAnimating or self.isChatOpen: return
         self.isAnimating, self.isChatOpen = True, True
         self.chatPanel.lift()
         self.animateChatPanel(True)
 
     def closeChatPanel(self):
-        """Initiates the closing animation for the chat panel."""
         if self.isAnimating or not self.isChatOpen: return
         self.isAnimating, self.isChatOpen = True, False
         self.animateChatPanel(False)
 
     def animateChatPanel(self, opening):
-        """Smoothly slides the chat panel in or out."""
         targetRelX = (1.0 - self.chatPanelWidthRel) if opening else 1.0
         step, delay = 0.025, 12
         if opening:
@@ -322,18 +289,15 @@ class ImageToWordApp(ctk.CTk):
             else: self.chatPanel.place_forget(); self.isAnimating = False
 
     def appendChatMessage(self, sender, msg):
-        """Appends a message to the chat history view."""
         self.chatHistory.configure(state="normal")
         self.chatHistory.insert("end", f"{sender}:\n{msg}\n\n")
         self.chatHistory.configure(state="disabled"); self.chatHistory.see("end")
 
     def addLog(self, msg):
-        """Adds a system log entry to the chat panel."""
         if not self.isChatOpen: self.openChatPanel()
         self.appendChatMessage("System", f"⚙️ {msg}")
 
     def processQuery(self):
-        """Handles user input and fetches AI responses from Gemini."""
         queryText = self.queryInput.get().strip()
         if not queryText: return
         self.queryInput.delete(0, "end")
@@ -354,11 +318,9 @@ class ImageToWordApp(ctk.CTk):
         threading.Thread(target=getAiResponse, daemon=True).start()
 
     def onModeChanged(self, *args):
-        """Triggers security guidelines when switching to Agentic Mode."""
         if self.ocrModeVar.get() == "agentic": self.showSecurityGuidelines()
 
     def buildUploadBox(self):
-        """Creates the initial file upload and mode selection box."""
         self.uploadFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
         innerFrame = ctk.CTkFrame(self.uploadFrame, fg_color="transparent")
         innerFrame.pack(expand=True)
@@ -372,7 +334,7 @@ class ImageToWordApp(ctk.CTk):
         
         self.ocrModeVar = ctk.StringVar(value="simple")
         self.ocrModeVar.trace_add("write", self.onModeChanged)
-        self.maskSensitiveVar = ctk.BooleanVar(value=True)  # ON by default for privacy
+        self.maskSensitiveVar = ctk.BooleanVar(value=True)  
         
         radioFrame = ctk.CTkFrame(innerFrame, fg_color="transparent")
         radioFrame.pack(pady=30)
@@ -385,7 +347,6 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkLabel(self.uploadFrame, text="*Your privacy is protected! No data is transmitted.", font=ctk.CTkFont(family=fontFamily, size=12, slant="italic"), text_color=textMuted).pack(side="bottom", pady=20, anchor="w", padx=30)
 
     def buildPreviewBox(self):
-        """Creates the image preview panel shown after selecting a file."""
         self.previewFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
         self.previewCanvas = tk.Canvas(self.previewFrame, bg=bgTint, highlightthickness=1, highlightbackground="#e5e7eb")
         self.previewCanvas.pack(fill="both", expand=True, padx=25, pady=(25, 10))
@@ -407,7 +368,6 @@ class ImageToWordApp(ctk.CTk):
         self.convertBtn.pack(side="right")
 
     def buildResultBox(self):
-        """Constructs the result preview box with download options."""
         self.resultFrame = ctk.CTkFrame(self.mainContainer, fg_color=cardTint, corner_radius=12, border_width=1, border_color="#e5e7eb")
         headerFrame = ctk.CTkFrame(self.resultFrame, fg_color="transparent")
         headerFrame.pack(fill="x", padx=25, pady=(20, 10))
@@ -429,14 +389,12 @@ class ImageToWordApp(ctk.CTk):
         ctk.CTkButton(footerFrame, text="📝 Text (.txt)", command=lambda: self.downloadResult("txt"), fg_color=textMuted, width=140, height=40, corner_radius=8).pack(side="left", padx=5)
 
     def showUploadBox(self):
-        """Resets the UI to the initial upload state."""
         self.previewFrame.pack_forget()
         self.resultFrame.pack_forget()
         self.uploadFrame.pack(fill="both", expand=True)
         self.imagePath = None
 
     def showPreviewBox(self, imgPath):
-        """Transitions the UI to show the image preview."""
         self.imagePath = imgPath
         self.fileLabel.configure(text=os.path.basename(imgPath))
         self.uploadFrame.pack_forget()
@@ -446,7 +404,6 @@ class ImageToWordApp(ctk.CTk):
         self.updatePreview(imgPath)
 
     def showResultBox(self, result):
-        """Displays the OCR extraction results in the preview textbox."""
         self.ocrResult = result
         self.previewFrame.pack_forget()
         self.uploadFrame.pack_forget()
@@ -458,7 +415,6 @@ class ImageToWordApp(ctk.CTk):
         if not extractedText: 
             extractedText = "\n".join([p.get("text", "") for p in result.get("paragraphs", [])])
         
-        # Apply masking at display level and show redaction banner
         if self.maskSensitiveVar.get():
             import re
             emailCount = len(re.findall(r'[a-zA-Z0-9_.+-]+(?:\s+[a-zA-Z0-9_.+-]+)*\s*@\s*[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+', extractedText))
@@ -476,16 +432,13 @@ class ImageToWordApp(ctk.CTk):
         self.resultText.configure(state="disabled")
 
     def browseImage(self):
-        """Triggers the file browser after terms acceptance."""
         self.showTermsModal(onAccept=self.actuallyBrowse)
 
     def actuallyBrowse(self):
-        """Opens a file dialog to pick an image file."""
         pickedFile = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.png *.jpeg *.bmp"), ("All", "*.*")])
         if pickedFile: self.showPreviewBox(pickedFile)
 
     def startConversion(self):
-        """Starts the OCR conversion process in a background thread."""
         if self.isProcessing: return
         self.isProcessing = True
         self.convertBtn.configure(state="disabled", text="Working...")
@@ -494,7 +447,6 @@ class ImageToWordApp(ctk.CTk):
         threading.Thread(target=self.convertWorker, daemon=True).start()
 
     def convertWorker(self):
-        """Background worker thread for processing the image and running OCR."""
         try:
             activeMode = self.ocrModeVar.get()
             self.after(0, lambda: self.addLog(f"Backend initialized. Mode: {activeMode.upper()}"))
@@ -509,7 +461,6 @@ class ImageToWordApp(ctk.CTk):
             resData = runOcr(self.imagePath, localMode=True)
             self.after(0, lambda: self.addLog(f"Step 3: Post-processing {len(resData.get('paragraphs', []))} text blocks..."))
             
-            # Step 4: AI Refinement (If active)
             if activeMode == "agentic" and self.llmClient.isActive():
                 self.after(500, lambda: self.addLog("Agentic Refinement: Connecting to Gemini for semantic correction..."))
                 rawText = resData.get("rawText", "")
@@ -518,7 +469,6 @@ class ImageToWordApp(ctk.CTk):
                 resData["isRefined"] = True
                 self.after(1000, lambda: self.addLog("Refinement complete. Corrected typos and improved structure."))
 
-            # Step 5: Privacy Redaction (If selected)
             if self.maskSensitiveVar.get():
                 self.after(200, lambda: self.addLog("Security: Redacting sensitive information (Emails/CNIC)..."))
                 resData["rawText"] = maskSensitiveInfo(resData.get("rawText", ""))
@@ -531,7 +481,6 @@ class ImageToWordApp(ctk.CTk):
         except Exception as e: self.after(0, self.onError, str(e))
 
     def onSuccess(self, resData):
-        """Called when the conversion succeeds."""
         self.isProcessing = False
         self.convertBtn.configure(state="normal", text="Convert Now")
         self.progressBar.stop()
@@ -541,14 +490,12 @@ class ImageToWordApp(ctk.CTk):
         self.showResultBox(resData)
 
     def onError(self, err):
-        """Called when the conversion fails."""
         self.isProcessing = False
         self.convertBtn.configure(state="normal", text="Convert Now")
         self.progressBar.stop()
         messagebox.showerror("Error", err)
 
     def downloadResult(self, fmt):
-        """Handles document generation and downloading in specified format."""
         baseName = os.path.join(os.path.dirname(self.imagePath), os.path.splitext(os.path.basename(self.imagePath))[0])
         try:
             if fmt == "docx": outPath = buildDocx(self.ocrResult, baseName + "_converted.docx")
@@ -560,7 +507,6 @@ class ImageToWordApp(ctk.CTk):
         except Exception as e: messagebox.showerror("Save Error", str(e))
 
     def updatePreview(self, imgPath):
-        """Updates the thumbnail preview on the canvas."""
         try:
             pilImg = Image.open(imgPath)
             canvasW, canvasH = max(self.previewCanvas.winfo_width(), 100), max(self.previewCanvas.winfo_height(), 100)
